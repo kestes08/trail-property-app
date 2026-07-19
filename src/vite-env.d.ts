@@ -1,4 +1,9 @@
 /// <reference types="vite/client" />
+/// <reference types="google.maps" />
+
+interface Window {
+  google: typeof google
+}
 
 interface ImportMetaEnv {
   /** Optional Google Maps API key. When set, the map card uses the official

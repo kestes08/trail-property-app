@@ -2,6 +2,13 @@ import type { Property } from './types'
 
 const ZOOM = 14
 
+/** Google Maps API key, if the app was built with one. */
+export const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+
+/** With a key we can render the JS map (trail overlays); without one we use the
+ *  keyless embed iframe, which cannot draw custom overlays. */
+export const hasMapsKey = (): boolean => Boolean(mapsApiKey)
+
 /**
  * Source URL for the embedded, interactive map iframe.
  *

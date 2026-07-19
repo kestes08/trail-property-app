@@ -45,13 +45,23 @@ Seed data lives in `src/data.ts`; shared state and actions are in `src/store.tsx
 
 ## Map
 
-The Home screen embeds an interactive Google Map (`src/components/PropertyMapEmbed.tsx`),
-centered on the coordinates in `property` (`src/data.ts`). By default it uses
-Google's keyless embed — fully interactive (pan / zoom) and the "Map ↗" pill
-opens the location full-screen in Google Maps — with no account or billing
-required. Set `VITE_GOOGLE_MAPS_API_KEY` (see `.env.example`) to switch to the
-official Maps Embed API with a satellite view. The original hand-drawn map is
-kept as `src/components/PropertyMap.tsx` if you prefer the illustrated look.
+The Home screen shows an interactive Google Map centered on the coordinates in
+`property` (`src/data.ts`). It has two modes:
+
+- **With a Google Maps API key** (`VITE_GOOGLE_MAPS_API_KEY`, see `.env.example`)
+  — `src/components/PropertyMapLive.tsx` loads the Maps JavaScript API and draws
+  each trail segment as a colored polyline (green = near done, amber = flagged by
+  the assistant, olive/gray = in progress, dashed olive = planned) with circular
+  waypoint markers at the junctions. Trail geometry lives on each segment's
+  `path` in `src/data.ts`, and the lines recolor live when the assistant logs
+  progress. Drawing custom overlays requires the JS API, which requires a key.
+- **Without a key** — falls back to `src/components/PropertyMapEmbed.tsx`, the
+  keyless Google embed: fully interactive (pan / zoom) with no account or billing,
+  but no custom trail overlays. It's also the fallback if the JS API fails to load.
+
+Either way the "Map ↗" pill deep-links to the location full-screen in Google
+Maps. The original hand-drawn map is kept as `src/components/PropertyMap.tsx` if
+you prefer the illustrated look.
 
 ## Getting started
 

@@ -1,4 +1,4 @@
-import { PropertyMapEmbed } from '../components/PropertyMapEmbed'
+import { PropertyMapLive } from '../components/PropertyMapLive'
 import { dueLabel, isSoon } from '../format'
 import { mapExternalUrl } from '../maps'
 import { useStore } from '../store'
@@ -51,9 +51,9 @@ export function Home() {
         </div>
       </header>
 
-      {/* Map card — interactive embedded Google Map */}
+      {/* Map card — interactive Google Map with trail overlays */}
       <div className="map-card">
-        <PropertyMapEmbed property={property} />
+        <PropertyMapLive property={property} segments={segments} />
         <a
           className="map-card__open pill"
           href={mapExternalUrl(property)}

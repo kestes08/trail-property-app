@@ -10,6 +10,11 @@ export interface Property {
 
 export type SegmentStatus = 'done' | 'in_progress' | 'planned'
 
+export interface LatLng {
+  lat: number
+  lng: number
+}
+
 export interface TrailSegment {
   id: string
   name: string
@@ -18,6 +23,8 @@ export interface TrailSegment {
   feetTotal: number
   status: SegmentStatus
   aiFlagged?: boolean
+  /** Ordered polyline drawn on the live map. */
+  path?: LatLng[]
 }
 
 export type TaskModule = 'trail' | 'yard' | 'equipment'

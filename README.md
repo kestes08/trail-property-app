@@ -7,8 +7,9 @@ larger screens.
 
 ## Modules
 
-- **Home** — property header, stylized map card, stat cards (trails built / open
-  tasks / tools logged), and an upcoming-tasks list pulled from every module.
+- **Home** — property header, an interactive embedded Google Map, stat cards
+  (trails built / open tasks / tools logged), and an upcoming-tasks list pulled
+  from every module.
 - **Trail Builder** — overall gradient progress, a weather-aware AI suggestion
   card, and a per-segment list (a flagged segment is tagged `SUGGESTED`; the
   final planned segment shows as a dashed placeholder).
@@ -41,6 +42,16 @@ etc.). Nothing is mutated silently.
 See `src/types.ts` — `Property`, `TrailSegment`, `Task`, `Equipment`,
 `ChatMessage` (with an optional `recordUpdate` diff), and `WeatherSnapshot`.
 Seed data lives in `src/data.ts`; shared state and actions are in `src/store.tsx`.
+
+## Map
+
+The Home screen embeds an interactive Google Map (`src/components/PropertyMapEmbed.tsx`),
+centered on the coordinates in `property` (`src/data.ts`). By default it uses
+Google's keyless embed — fully interactive (pan / zoom) and the "Map ↗" pill
+opens the location full-screen in Google Maps — with no account or billing
+required. Set `VITE_GOOGLE_MAPS_API_KEY` (see `.env.example`) to switch to the
+official Maps Embed API with a satellite view. The original hand-drawn map is
+kept as `src/components/PropertyMap.tsx` if you prefer the illustrated look.
 
 ## Getting started
 

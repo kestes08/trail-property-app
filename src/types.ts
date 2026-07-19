@@ -3,6 +3,9 @@ export interface Property {
   location: string
   acreage: number
   owner: string
+  /** Map center for the embedded Google Map. */
+  lat: number
+  lng: number
 }
 
 export type SegmentStatus = 'done' | 'in_progress' | 'planned'

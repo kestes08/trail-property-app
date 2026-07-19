@@ -141,7 +141,12 @@
   border-radius: 22px;
   overflow: hidden;
   border: 1px solid var(--hairline);
-  cursor: pointer;
+  background: #e7e0c8;
+}
+.map-card__frame {
+  display: block;
+  width: 100%;
+  border: 0;
 }
 .map-card__open {
   position: absolute;
@@ -156,6 +161,8 @@
   font-weight: 600;
   padding: 7px 13px;
   backdrop-filter: blur(2px);
+  text-decoration: none;
+  z-index: 2;
 }
 .map-card__stat {
   position: absolute;
@@ -169,6 +176,9 @@
   font-size: 11px;
   font-weight: 600;
   padding: 7px 13px;
+  z-index: 2;
+  /* let map drags pass through the stat chip to the iframe */
+  pointer-events: none;
 }
 
 .stat-row {

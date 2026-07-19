@@ -1,5 +1,6 @@
-import { PropertyMap } from '../components/PropertyMap'
+import { PropertyMapEmbed } from '../components/PropertyMapEmbed'
 import { dueLabel, isSoon } from '../format'
+import { mapExternalUrl } from '../maps'
 import { useStore } from '../store'
 import type { Task } from '../types'
 
@@ -50,15 +51,18 @@ export function Home() {
         </div>
       </header>
 
-      {/* Map card */}
-      <div className="map-card" onClick={() => setRoute('trails')}>
-        <PropertyMap />
-        <button className="map-card__open pill" onClick={(e) => { e.stopPropagation(); setRoute('trails') }}>
+      {/* Map card — interactive embedded Google Map */}
+      <div className="map-card">
+        <PropertyMapEmbed property={property} />
+        <a
+          className="map-card__open pill"
+          href={mapExternalUrl(property)}
+          target="_blank"
+          rel="noreferrer"
+        >
           Map ↗
-        </button>
-        <div className="map-card__stat pill">
-          {trailCount} trails · 3 zones
-        </div>
+        </a>
+        <div className="map-card__stat pill">{trailCount} trails · 3 zones</div>
       </div>
 
       {/* Stat cards */}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#1f3d2b"/>
+  <!-- ridge silhouettes -->
+  <path d="M0 372 L150 216 L252 312 L372 188 L512 344 L512 512 L0 512 Z" fill="#274434"/>
+  <path d="M0 412 L128 316 L242 392 L360 300 L512 404 L512 512 L0 512 Z" fill="#6f7a44"/>
+  <!-- dashed trail -->
+  <path d="M84 150 C 196 214, 168 300, 268 322 S 420 300, 452 402"
+        fill="none" stroke="#c8743a" stroke-width="16" stroke-linecap="round"
+        stroke-dasharray="2 34"/>
+  <!-- waypoints -->
+  <g>
+    <circle cx="84" cy="150" r="20" fill="#f3efe4"/>
+    <circle cx="84" cy="150" r="20" fill="none" stroke="#c8743a" stroke-width="7"/>
+    <circle cx="268" cy="322" r="20" fill="#f3efe4"/>
+    <circle cx="268" cy="322" r="20" fill="none" stroke="#c8743a" stroke-width="7"/>
+  </g>
+</svg>

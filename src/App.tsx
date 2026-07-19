@@ -9,14 +9,17 @@ import { Stats } from './screens/Stats'
 import { TrailBuilder } from './screens/TrailBuilder'
 import { Yard } from './screens/Yard'
 import { useStore } from './store'
+import { useStandalone } from './useStandalone'
 
 export default function App() {
   const { route, toast } = useStore()
   const onRanger = route === 'ranger'
+  const standalone = useStandalone()
 
   return (
-    <div className={`phone ${onRanger ? 'phone--dark' : ''}`}>
-      <StatusBar dark={onRanger} />
+    <div className={`phone ${onRanger ? 'phone--dark' : ''} ${standalone ? 'is-standalone' : ''}`}>
+      {/* When installed, iOS shows its own status bar — don't duplicate it. */}
+      {!standalone && <StatusBar dark={onRanger} />}
 
       <main className="screen">
         {route === 'home' && <Home />}

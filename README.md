@@ -63,6 +63,27 @@ Either way the "Map ↗" pill deep-links to the location full-screen in Google
 Maps. The original hand-drawn map is kept as `src/components/PropertyMap.tsx` if
 you prefer the illustrated look.
 
+## Deploy & install to your phone
+
+This is a web app, so "installing" means adding it to your Home Screen — it gets
+its own icon and opens full-screen (`display: standalone`), with no App Store
+step. Icons and a web app manifest live in `public/`.
+
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the app and
+publishes it to GitHub Pages on every push. One-time setup:
+
+1. In the repo, **Settings → Pages → Build and deployment → Source: GitHub
+   Actions**.
+2. (Optional, for the trail overlays) **Settings → Secrets and variables →
+   Actions → New repository secret** named `VITE_GOOGLE_MAPS_API_KEY` with your
+   Maps key.
+3. Push to the deploying branch — the site publishes at
+   `https://<user>.github.io/trail-property-app/`.
+
+On your iPhone, open that URL in Safari → **Share → Add to Home Screen**. The
+production build is served from the `/trail-property-app/` base path (set in
+`vite.config.ts`); if you rename the repo or host at the root, update `base`.
+
 ## Getting started
 
 ```bash

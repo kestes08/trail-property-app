@@ -19,6 +19,7 @@ export function Home() {
     overallPercent,
     openTaskCount,
     equipment,
+    boundary,
     toggleTask,
     setRoute,
   } = useStore()
@@ -53,7 +54,7 @@ export function Home() {
 
       {/* Map card — interactive Google Map with trail overlays */}
       <div className="map-card">
-        <PropertyMapLive property={property} segments={segments} />
+        <PropertyMapLive property={property} segments={segments} boundary={boundary} />
         <a
           className="map-card__open pill"
           href={mapExternalUrl(property)}

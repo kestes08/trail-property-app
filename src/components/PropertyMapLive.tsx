@@ -21,6 +21,8 @@ interface Props {
   onAddPoint?: (point: LatLng) => void
   /** In-progress path being traced, drawn on top in the accent color. */
   draftPath?: LatLng[]
+  /** Property boundary polygon (shaded parcel) drawn beneath the trails. */
+  boundary?: LatLng[] | null
 }
 
 /**
@@ -28,7 +30,7 @@ interface Props {
  * with circular waypoint markers, and — when `onAddPoint` is set — tapping the
  * map traces a new trail. Falls back to the keyless embed with no API key.
  */
-export function PropertyMapLive({ property, segments, height = 176, onAddPoint, draftPath }: Props) {
+export function PropertyMapLive({ property, segments, height = 176, onAddPoint, draftPath, boundary }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const overlaysRef = useRef<Array<{ setMap: (m: google.maps.Map | null) => void }>>([])
@@ -80,6 +82,24 @@ export function PropertyMapLive({ property, segments, height = 176, onAddPoint, 
 
     const bounds = new google.maps.LatLngBounds()
     const waypoints = new Map<string, google.maps.LatLngLiteral>()
+
+    // Property boundary (shaded parcel), drawn beneath the trails.
+    if (boundary && boundary.length >= 3) {
+      overlaysRef.current.push(
+        new google.maps.Polygon({
+          paths: boundary,
+          map,
+          fillColor: '#6f7a44',
+          fillOpacity: 0.1,
+          strokeColor: '#3d5a3f',
+          strokeOpacity: 0.9,
+          strokeWeight: 2,
+          clickable: false,
+          zIndex: 1,
+        }),
+      )
+      boundary.forEach((pt) => bounds.extend(pt))
+    }
 
     segments.forEach((seg) => {
       if (!seg.path || seg.path.length < 2) return
@@ -133,11 +153,12 @@ export function PropertyMapLive({ property, segments, height = 176, onAddPoint, 
       })
     }
 
-    // Fit to the trails only when not actively drawing (avoids recentering on each tap).
-    if (!draftPath && !bounds.isEmpty()) {
+    // Fit to the property (boundary + trails) when not mid-trace, so panning
+    // during drawing isn't interrupted by a recenter on each tap.
+    if ((!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath])
+  }, [ready, segments, draftPath, boundary])
 
   if (failed || !hasMapsKey()) {
     return <PropertyMapEmbed property={property} height={height} />

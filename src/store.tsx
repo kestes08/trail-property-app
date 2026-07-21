@@ -68,6 +68,8 @@ interface Store {
   dismissSuggestion: () => void
   addTaskForSuggestion: () => void
   addSegment: (name: string, path: LatLng[], feetTotal: number) => void
+  boundary: LatLng[] | null
+  setBoundary: (path: LatLng[] | null) => void
 
   // derived
   overallPercent: number
@@ -89,6 +91,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [segments, setSegments] = useState<TrailSegment[]>(initialSegments)
   const [tasks, setTasks] = useState<Task[]>(persisted?.tasks ?? seed.tasks)
   const [equipment, setEquipment] = useState<Equipment[]>(persisted?.equipment ?? seed.equipment)
+  const [boundary, setBoundary] = useState<LatLng[] | null>(persisted?.boundary ?? null)
   const [chat, setChat] = useState<ChatMessage[]>(() =>
     [openingMessage(initialSegments, seed.weather)],
   )
@@ -213,8 +216,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Persist the real data whenever it changes.
   useEffect(() => {
-    saveState({ segments, tasks, equipment })
-  }, [segments, tasks, equipment])
+    saveState({ segments, tasks, equipment, boundary })
+  }, [segments, tasks, equipment, boundary])
 
   const feetComplete = segments.reduce((a, s) => a + s.feetComplete, 0)
   const feetTotal = segments.reduce((a, s) => a + s.feetTotal, 0)
@@ -246,6 +249,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissSuggestion,
       addTaskForSuggestion,
       addSegment,
+      boundary,
+      setBoundary,
       overallPercent,
       feetComplete,
       feetTotal,
@@ -272,6 +277,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissSuggestion,
       addTaskForSuggestion,
       addSegment,
+      boundary,
+      setBoundary,
       overallPercent,
       feetComplete,
       feetTotal,

@@ -71,6 +71,23 @@ points, name the trail, and save. The traced path and its measured length (see
 `src/geo.ts`) are stored, drawn on the property map, and tracked from then on —
 log build progress on it by name through the assistant.
 
+### Property lines (GIS)
+
+The Trail Builder screen can show the property boundary two ways (`src/parcel.ts`,
+rendered by `PropertyMapLive`):
+
+- **Import from VA GIS** — queries Virginia's statewide parcel FeatureServer
+  (VGIN/VDEM) at the property center and draws the returned parcel polygon. The
+  fetch runs in the browser; parcel boundaries are cartographic/approximate, not
+  a survey, and the button falls back gracefully if the service is unreachable
+  or blocks CORS.
+- **Trace it** — tap each corner of the property on the map to draw the boundary
+  by hand. Always available, accurate to what you know your lines to be.
+
+The boundary is shaded on the property map (Home) and persists like everything
+else. Set the property's real `lat`/`lng` in `src/data.ts` so both the map center
+and the GIS lookup target the right land.
+
 ### Persistence
 
 Trails you plot, progress you log, and task/equipment changes are saved to the

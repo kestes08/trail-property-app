@@ -25,76 +25,11 @@ export const weather: WeatherSnapshot = {
 
 // Ordered ridge → creek. The lowest-progress in-progress segment is the one
 // the assistant flags against incoming rain (drainage before ground softens).
-// Trail geometry is a connected route around the property center. Endpoints
-// are shared between consecutive segments so the waypoint markers line up.
-export const trailSegments: TrailSegment[] = [
-  {
-    id: 'seg-switchbacks',
-    name: 'Upper Switchbacks',
-    percentComplete: 92,
-    feetComplete: 552,
-    feetTotal: 600,
-    status: 'in_progress',
-    path: [
-      { lat: 38.0575, lng: -78.7301 },
-      { lat: 38.057, lng: -78.7293 },
-      { lat: 38.0567, lng: -78.7297 },
-      { lat: 38.0563, lng: -78.7289 },
-    ],
-  },
-  {
-    id: 'seg-ridgeline',
-    name: 'Ridgeline Traverse',
-    percentComplete: 74,
-    feetComplete: 1036,
-    feetTotal: 1400,
-    status: 'in_progress',
-    path: [
-      { lat: 38.0563, lng: -78.7289 },
-      { lat: 38.0557, lng: -78.7279 },
-      { lat: 38.0551, lng: -78.7269 },
-      { lat: 38.0547, lng: -78.7259 },
-    ],
-  },
-  {
-    id: 'seg-creek-drainage',
-    name: 'Creek Drainage',
-    percentComplete: 38,
-    feetComplete: 190,
-    feetTotal: 500,
-    status: 'in_progress',
-    aiFlagged: true,
-    path: [
-      { lat: 38.0547, lng: -78.7259 },
-      { lat: 38.0541, lng: -78.7257 },
-      { lat: 38.0536, lng: -78.7261 },
-      { lat: 38.0532, lng: -78.7267 },
-    ],
-  },
-  {
-    id: 'seg-meadow-connector',
-    name: 'Meadow Connector',
-    percentComplete: 0,
-    feetComplete: 0,
-    feetTotal: 720,
-    status: 'planned',
-    path: [
-      { lat: 38.0532, lng: -78.7267 },
-      { lat: 38.0533, lng: -78.7277 },
-      { lat: 38.0538, lng: -78.7285 },
-      { lat: 38.0545, lng: -78.7289 },
-    ],
-  },
-]
+// No trails yet — Kaleb plots his own on the map (Trail Builder screen), and
+// each plotted segment is stored with its path and tracked from there.
+export const trailSegments: TrailSegment[] = []
 
 export const tasks: Task[] = [
-  {
-    id: 'task-drainage',
-    title: 'Cut drainage on Creek section',
-    module: 'trail',
-    dueDate: '2026-07-20',
-    done: false,
-  },
   {
     id: 'task-mow-meadow',
     title: 'Mow the lower meadow',

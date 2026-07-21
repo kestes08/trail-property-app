@@ -63,6 +63,20 @@ Either way the "Map ↗" pill deep-links to the location full-screen in Google
 Maps. The original hand-drawn map is kept as `src/components/PropertyMap.tsx` if
 you prefer the illustrated look.
 
+### Plotting trails
+
+The app ships with no trails. On the Trail Builder screen (with a Maps key),
+**Plot a trail** puts the map in drawing mode: tap along the route to drop
+points, name the trail, and save. The traced path and its measured length (see
+`src/geo.ts`) are stored, drawn on the property map, and tracked from then on —
+log build progress on it by name through the assistant.
+
+### Persistence
+
+Trails you plot, progress you log, and task/equipment changes are saved to the
+browser's `localStorage` (`src/persist.ts`) so they survive reloads. There's no
+backend; data lives on the device. Clearing site data resets to the empty seed.
+
 ## Deploy & install to your phone
 
 This is a web app, so "installing" means adding it to your Home Screen — it gets

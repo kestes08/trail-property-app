@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,9 +10,11 @@ import {
 } from 'react'
 import { interpret, type AIResult } from './ai'
 import * as seed from './data'
+import { loadState, saveState } from './persist'
 import type {
   ChatMessage,
   Equipment,
+  LatLng,
   Property,
   Task,
   TrailSegment,
@@ -64,6 +67,7 @@ interface Store {
   serviceEquipment: (id: string) => void
   dismissSuggestion: () => void
   addTaskForSuggestion: () => void
+  addSegment: (name: string, path: LatLng[], feetTotal: number) => void
 
   // derived
   overallPercent: number
@@ -78,11 +82,15 @@ interface Store {
 const StoreContext = createContext<Store | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [segments, setSegments] = useState<TrailSegment[]>(seed.trailSegments)
-  const [tasks, setTasks] = useState<Task[]>(seed.tasks)
-  const [equipment, setEquipment] = useState<Equipment[]>(seed.equipment)
+  // Rehydrate saved data (trails you plot, progress you log) from the browser,
+  // falling back to the seed on first run.
+  const persisted = useMemo(() => loadState(), [])
+  const initialSegments = persisted?.segments ?? seed.trailSegments
+  const [segments, setSegments] = useState<TrailSegment[]>(initialSegments)
+  const [tasks, setTasks] = useState<Task[]>(persisted?.tasks ?? seed.tasks)
+  const [equipment, setEquipment] = useState<Equipment[]>(persisted?.equipment ?? seed.equipment)
   const [chat, setChat] = useState<ChatMessage[]>(() =>
-    [openingMessage(seed.trailSegments, seed.weather)],
+    [openingMessage(initialSegments, seed.weather)],
   )
   const [route, setRouteState] = useState<Route>('home')
   const [prevTab, setPrevTab] = useState<TabKey>('home')
@@ -185,6 +193,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     flashToast('Added: drainage task')
   }, [segments, flashToast])
 
+  // Plot a new trail: store its traced path and start tracking it at 0%.
+  const addSegment = useCallback(
+    (name: string, path: LatLng[], feetTotal: number) => {
+      const segment: TrailSegment = {
+        id: uid('seg'),
+        name: name.trim() || 'New trail',
+        path,
+        feetTotal: Math.max(1, Math.round(feetTotal)),
+        feetComplete: 0,
+        percentComplete: 0,
+        status: 'in_progress',
+      }
+      setSegments((s) => [...s, segment])
+      flashToast(`Plotted ${segment.name}`)
+    },
+    [flashToast],
+  )
+
+  // Persist the real data whenever it changes.
+  useEffect(() => {
+    saveState({ segments, tasks, equipment })
+  }, [segments, tasks, equipment])
+
   const feetComplete = segments.reduce((a, s) => a + s.feetComplete, 0)
   const feetTotal = segments.reduce((a, s) => a + s.feetTotal, 0)
   const overallPercent = feetTotal ? Math.round((feetComplete / feetTotal) * 100) : 0
@@ -214,6 +245,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       serviceEquipment,
       dismissSuggestion,
       addTaskForSuggestion,
+      addSegment,
       overallPercent,
       feetComplete,
       feetTotal,
@@ -239,6 +271,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       serviceEquipment,
       dismissSuggestion,
       addTaskForSuggestion,
+      addSegment,
       overallPercent,
       feetComplete,
       feetTotal,

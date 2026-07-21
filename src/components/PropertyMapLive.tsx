@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadGoogleMaps } from '../googleMapsLoader'
 import { hasMapsKey, mapsApiKey } from '../maps'
-import type { Property, TrailSegment } from '../types'
+import type { LatLng, Property, TrailSegment } from '../types'
 import { PropertyMapEmbed } from './PropertyMapEmbed'
 
 /** Trail line color, mirroring the segment coloring used in the Trail Builder. */
@@ -13,42 +13,54 @@ function segmentColor(seg: TrailSegment): string {
   return '#6f7a44' // olive — mid
 }
 
-/**
- * Interactive Google Map (JS API) with each trail segment drawn as a colored
- * polyline and circular waypoint markers at the segment junctions. Falls back
- * to the keyless embed if there is no API key or the script fails to load.
- */
-export function PropertyMapLive({
-  property,
-  segments,
-  height = 176,
-}: {
+interface Props {
   property: Property
   segments: TrailSegment[]
   height?: number
-}) {
+  /** When set, tapping the map reports the point (drawing mode). */
+  onAddPoint?: (point: LatLng) => void
+  /** In-progress path being traced, drawn on top in the accent color. */
+  draftPath?: LatLng[]
+}
+
+/**
+ * Interactive Google Map (JS API): each trail segment is a colored polyline
+ * with circular waypoint markers, and — when `onAddPoint` is set — tapping the
+ * map traces a new trail. Falls back to the keyless embed with no API key.
+ */
+export function PropertyMapLive({ property, segments, height = 176, onAddPoint, draftPath }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const overlaysRef = useRef<Array<{ setMap: (m: google.maps.Map | null) => void }>>([])
+  const addPointRef = useRef<Props['onAddPoint']>(onAddPoint)
+  const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
 
-  // Create the map once.
+  // Keep the latest click handler without re-binding the map listener.
+  addPointRef.current = onAddPoint
+
   useEffect(() => {
     if (!mapsApiKey) return
     let cancelled = false
     loadGoogleMaps(mapsApiKey)
       .then((maps) => {
         if (cancelled || !containerRef.current) return
-        mapRef.current = new maps.Map(containerRef.current, {
+        const map = new maps.Map(containerRef.current, {
           center: { lat: property.lat, lng: property.lng },
-          zoom: 15,
+          zoom: 16,
           mapTypeId: 'terrain',
           disableDefaultUI: true,
           zoomControl: true,
           gestureHandling: 'greedy',
           clickableIcons: false,
         })
-        drawOverlays()
+        map.addListener('click', (e: google.maps.MapMouseEvent) => {
+          if (e.latLng && addPointRef.current) {
+            addPointRef.current({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          }
+        })
+        mapRef.current = map
+        setReady(true)
       })
       .catch(() => {
         if (!cancelled) setFailed(true)
@@ -56,20 +68,13 @@ export function PropertyMapLive({
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [property.lat, property.lng])
 
-  // Redraw whenever the segments change (e.g. after the AI logs progress).
+  // (Re)draw overlays whenever the data or the in-progress path changes.
   useEffect(() => {
-    drawOverlays()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segments])
-
-  function drawOverlays() {
     const map = mapRef.current
-    if (typeof google === 'undefined' || !map) return
+    if (!ready || typeof google === 'undefined' || !map) return
 
-    // Clear previous overlays.
     overlaysRef.current.forEach((o) => o.setMap(null))
     overlaysRef.current = []
 
@@ -80,31 +85,17 @@ export function PropertyMapLive({
       if (!seg.path || seg.path.length < 2) return
       const color = segmentColor(seg)
       const planned = seg.status === 'planned'
-
       const line = new google.maps.Polyline({
         path: seg.path,
         map,
         strokeColor: color,
         strokeOpacity: planned ? 0 : 0.95,
         strokeWeight: 4,
-        // Planned segment renders as a dashed line.
         icons: planned
-          ? [
-              {
-                icon: {
-                  path: 'M 0,-1 0,1',
-                  strokeColor: color,
-                  strokeOpacity: 1,
-                  scale: 3,
-                },
-                offset: '0',
-                repeat: '12px',
-              },
-            ]
+          ? [{ icon: { path: 'M 0,-1 0,1', strokeColor: color, strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '12px' }]
           : undefined,
       })
       overlaysRef.current.push(line)
-
       seg.path.forEach((pt) => bounds.extend(pt))
       const start = seg.path[0]
       const end = seg.path[seg.path.length - 1]
@@ -113,30 +104,43 @@ export function PropertyMapLive({
     })
 
     waypoints.forEach((pt) => {
-      const marker = new google.maps.Marker({
-        position: pt,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 5,
-          fillColor: '#c8743a',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-        },
-        zIndex: 5,
-      })
-      overlaysRef.current.push(marker)
+      overlaysRef.current.push(
+        new google.maps.Marker({
+          position: pt,
+          map,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 5, fillColor: '#c8743a', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+          zIndex: 5,
+        }),
+      )
     })
 
-    if (!bounds.isEmpty()) {
+    // The trail being traced right now.
+    if (draftPath && draftPath.length > 0) {
+      if (draftPath.length >= 2) {
+        overlaysRef.current.push(
+          new google.maps.Polyline({ path: draftPath, map, strokeColor: '#c8743a', strokeOpacity: 1, strokeWeight: 4, zIndex: 6 }),
+        )
+      }
+      draftPath.forEach((pt, i) => {
+        overlaysRef.current.push(
+          new google.maps.Marker({
+            position: pt,
+            map,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: i === 0 ? 6 : 4, fillColor: '#ffffff', fillOpacity: 1, strokeColor: '#c8743a', strokeWeight: 2 },
+            zIndex: 7,
+          }),
+        )
+      })
+    }
+
+    // Fit to the trails only when not actively drawing (avoids recentering on each tap).
+    if (!draftPath && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }
+  }, [ready, segments, draftPath])
 
   if (failed || !hasMapsKey()) {
     return <PropertyMapEmbed property={property} height={height} />
   }
-
   return <div ref={containerRef} className="map-card__frame" style={{ height }} />
 }

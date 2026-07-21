@@ -387,6 +387,117 @@
   border: 1.5px solid var(--warn-border);
   color: var(--ink-soft);
 }
+.btn--ghost {
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  color: var(--ink-soft);
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+
+/* Empty state (no trails yet) */
+.empty {
+  margin-top: 28px;
+  text-align: center;
+  padding: 0 14px;
+}
+.empty__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: #eef0e2;
+  border: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+.empty__title {
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.empty__body {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 auto 18px;
+  max-width: 280px;
+}
+.empty__note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-softer);
+  max-width: 300px;
+  margin: 0 auto;
+}
+.empty__note code {
+  font-size: 11px;
+  background: #eef0e2;
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+/* Trail plotting */
+.draw {
+  margin-top: 14px;
+}
+.draw .map-card__frame {
+  border-radius: 18px;
+  border: 1px solid var(--hairline);
+}
+.draw__panel {
+  margin-top: 12px;
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  padding: 15px;
+}
+.draw__hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.draw__stats {
+  display: flex;
+  gap: 22px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.draw__stats .num {
+  font-size: 18px;
+  color: var(--ink);
+  margin-right: 3px;
+}
+.draw__input {
+  width: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 11px 13px;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--cream);
+  outline: none;
+  margin-bottom: 12px;
+}
+.draw__input:focus {
+  border-color: var(--olive);
+}
+.draw__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.draw__actions .btn {
+  flex: 1 1 auto;
+  padding: 10px 12px;
+}
 
 .seg-list {
   display: flex;

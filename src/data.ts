@@ -8,6 +8,7 @@ import type {
 
 export const property: Property = {
   name: 'Hollow Ridge',
+  address: '2045 Upper Stony Run',
   location: 'Crozet, VA',
   acreage: 15,
   owner: 'Kaleb',

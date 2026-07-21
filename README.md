@@ -70,8 +70,9 @@ there are two ways to add one:
 
 - **Record by walking** — uses the phone's GPS (`src/useTrailTracker.ts`,
   Geolocation `watchPosition`) to record the trail as you walk it, with live
-  distance and a follow-the-dot map. Poor fixes and jitter are filtered out.
-  Requires HTTPS + location permission.
+  distance and a follow-the-dot map. Poor fixes and jitter are filtered out,
+  and a screen Wake Lock keeps the phone awake while recording. Requires HTTPS
+  + location permission.
 - **Plot by tapping** — tap along the route on the map to drop points.
 
 Either way you name it and save; the path and its measured length (`src/geo.ts`)

@@ -28,6 +28,22 @@ export function useTrailTracker(): TrailTracker {
   const [error, setError] = useState<string | null>(null)
   const watchId = useRef<number | null>(null)
   const pointsRef = useRef<LatLng[]>([])
+  const wakeLock = useRef<WakeLockSentinel | null>(null)
+
+  const acquireWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock.current = await navigator.wakeLock.request('screen')
+      }
+    } catch {
+      // Not supported / denied — recording still works, screen may just sleep.
+    }
+  }, [])
+
+  const releaseWakeLock = useCallback(() => {
+    wakeLock.current?.release().catch(() => {})
+    wakeLock.current = null
+  }, [])
 
   const clearWatch = useCallback(() => {
     if (watchId.current != null) {
@@ -77,24 +93,42 @@ export function useTrailTracker(): TrailTracker {
       timeout: 20000,
     })
     setRecording(true)
-  }, [onPosition, onError])
+    void acquireWakeLock()
+  }, [onPosition, onError, acquireWakeLock])
 
   const pause = useCallback(() => {
     clearWatch()
+    releaseWakeLock()
     setRecording(false)
-  }, [clearWatch])
+  }, [clearWatch, releaseWakeLock])
 
   const reset = useCallback(() => {
     clearWatch()
+    releaseWakeLock()
     pointsRef.current = []
     setPoints([])
     setAccuracy(null)
     setError(null)
     setRecording(false)
-  }, [clearWatch])
+  }, [clearWatch, releaseWakeLock])
 
-  // Clean up the watch if the component unmounts mid-recording.
-  useEffect(() => () => clearWatch(), [clearWatch])
+  // The screen wake lock drops when the tab is hidden; re-acquire on return.
+  useEffect(() => {
+    const onVisible = () => {
+      if (recording && document.visibilityState === 'visible') void acquireWakeLock()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [recording, acquireWakeLock])
+
+  // Clean up the watch and wake lock if the component unmounts mid-recording.
+  useEffect(
+    () => () => {
+      clearWatch()
+      releaseWakeLock()
+    },
+    [clearWatch, releaseWakeLock],
+  )
 
   return { points, recording, accuracy, error, start, pause, reset }
 }

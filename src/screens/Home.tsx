@@ -10,6 +10,13 @@ const moduleLabel: Record<Task['module'], string> = {
   equipment: 'Equipment',
 }
 
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export function Home() {
   const {
     property,
@@ -37,9 +44,9 @@ export function Home() {
       <header className="home__header">
         <div>
           <div className="label" style={{ color: 'var(--ink-softer)' }}>
-            Good morning, {property.owner}
+            {greeting()}, {property.owner}
           </div>
-          <h1 className="head home__title">{property.name}</h1>
+          <h1 className="head home__title">{property.address}</h1>
           <div className="home__sub">
             {property.location} · {property.acreage} acres
           </div>

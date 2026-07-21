@@ -1,5 +1,6 @@
 export interface Property {
   name: string
+  address: string
   location: string
   acreage: number
   owner: string

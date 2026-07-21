@@ -228,11 +228,14 @@ export function PropertyMapLive({
         tileSize: new google.maps.Size(256, 256),
         opacity: 0.85,
         getTileUrl: (coord, zoom) => {
+          // Request each 256px tile at 512px. The service picks its contour
+          // detail from image-size-vs-extent, so oversizing pulls in the finer
+          // intermediate contours; the browser scales the result back to 256.
           const params = new URLSearchParams({
             bbox: tileBboxMercator(coord.x, coord.y, zoom),
             bboxSR: '3857',
             imageSR: '3857',
-            size: '256,256',
+            size: '512,512',
             format: 'png32',
             transparent: 'true',
             dpi: '96',

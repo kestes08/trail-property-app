@@ -47,6 +47,8 @@ export function Equipment() {
         </span>
       </div>
 
+      {equipment.length === 0 && <div className="mini-empty card">No equipment yet.</div>}
+
       <div className="gear-list">
         {equipment.map((e, i) => {
           const meta = statusMeta[e.status]

@@ -23,6 +23,19 @@ interface Props {
   draftPath?: LatLng[]
   /** Property boundary polygon (shaded parcel) drawn beneath the trails. */
   boundary?: LatLng[] | null
+  /** Overlay USGS elevation contour lines from The National Map. */
+  showElevation?: boolean
+}
+
+// Slippy tile (x/y/z) → Web Mercator bbox "xmin,ymin,xmax,ymax" for ArcGIS export.
+function tileBboxMercator(x: number, y: number, z: number): string {
+  const originShift = Math.PI * 6378137
+  const tileSize = (2 * originShift) / Math.pow(2, z)
+  const minX = -originShift + x * tileSize
+  const maxX = -originShift + (x + 1) * tileSize
+  const maxY = originShift - y * tileSize
+  const minY = originShift - (y + 1) * tileSize
+  return `${minX},${minY},${maxX},${maxY}`
 }
 
 /**
@@ -30,10 +43,19 @@ interface Props {
  * with circular waypoint markers, and — when `onAddPoint` is set — tapping the
  * map traces a new trail. Falls back to the keyless embed with no API key.
  */
-export function PropertyMapLive({ property, segments, height = 176, onAddPoint, draftPath, boundary }: Props) {
+export function PropertyMapLive({
+  property,
+  segments,
+  height = 176,
+  onAddPoint,
+  draftPath,
+  boundary,
+  showElevation,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const overlaysRef = useRef<Array<{ setMap: (m: google.maps.Map | null) => void }>>([])
+  const elevationRef = useRef<google.maps.ImageMapType | null>(null)
   const addPointRef = useRef<Props['onAddPoint']>(onAddPoint)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -159,6 +181,36 @@ export function PropertyMapLive({ property, segments, height = 176, onAddPoint, 
       map.fitBounds(bounds, 28)
     }
   }, [ready, segments, draftPath, boundary])
+
+  // Toggle the USGS elevation-contour tile overlay.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!ready || typeof google === 'undefined' || !map) return
+    if (!elevationRef.current) {
+      elevationRef.current = new google.maps.ImageMapType({
+        name: 'USGS Contours',
+        tileSize: new google.maps.Size(256, 256),
+        opacity: 0.85,
+        getTileUrl: (coord, zoom) => {
+          const params = new URLSearchParams({
+            bbox: tileBboxMercator(coord.x, coord.y, zoom),
+            bboxSR: '3857',
+            imageSR: '3857',
+            size: '256,256',
+            format: 'png32',
+            transparent: 'true',
+            dpi: '96',
+            f: 'image',
+          })
+          return `https://carto.nationalmap.gov/arcgis/rest/services/contours/MapServer/export?${params.toString()}`
+        },
+      })
+    }
+    const overlays = map.overlayMapTypes
+    const idx = overlays.getArray().indexOf(elevationRef.current)
+    if (showElevation && idx === -1) overlays.push(elevationRef.current)
+    if (!showElevation && idx !== -1) overlays.removeAt(idx)
+  }, [ready, showElevation])
 
   if (failed || !hasMapsKey()) {
     return <PropertyMapEmbed property={property} height={height} />

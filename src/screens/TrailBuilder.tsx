@@ -31,6 +31,7 @@ export function TrailBuilder() {
     addSegment,
     boundary,
     setBoundary,
+    showElevation,
     setRoute,
   } = useStore()
 
@@ -107,6 +108,7 @@ export function TrailBuilder() {
             property={property}
             segments={segments}
             boundary={boundary}
+            showElevation={showElevation}
             height={300}
             draftPath={draftPath}
             onAddPoint={(pt) => setDraftPath((p) => [...p, pt])}

@@ -88,6 +88,16 @@ The boundary is shaded on the property map (Home) and persists like everything
 else. Set the property's real `lat`/`lng` in `src/data.ts` so both the map center
 and the GIS lookup target the right land.
 
+### Map overlays (toggles)
+
+Below the Home map, two toggle chips control overlays on the live map:
+
+- **Property lines** — shows/hides the boundary polygon (appears once a boundary
+  is set).
+- **Elevation** — overlays USGS contour lines from The National Map
+  (`carto.nationalmap.gov`, added as a tiled `ImageMapType`). Loads as image
+  tiles, so no CORS or key beyond the Google Maps key is needed.
+
 ### Persistence
 
 Trails you plot, progress you log, and task/equipment changes are saved to the

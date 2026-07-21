@@ -1,7 +1,8 @@
 import type { Equipment, LatLng, Task, TrailSegment } from './types'
 
-// Bump the version if the stored shape changes in a breaking way.
-const STORAGE_KEY = 'hollow-ridge.v1'
+// Bump the version if the stored shape changes in a breaking way. v2 also
+// clears the earlier example data that v1 had saved to the browser.
+const STORAGE_KEY = 'hollow-ridge.v2'
 
 export interface PersistedState {
   segments: TrailSegment[]

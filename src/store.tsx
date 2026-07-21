@@ -36,7 +36,9 @@ function openingMessage(segments: TrailSegment[], weather: WeatherSnapshot): Cha
   const text =
     weather.rainIncoming && lowest
       ? `Morning. ${weather.condition} — ${lowest.name} is your lowest segment at ${lowest.percentComplete}%. If you cut its drainage today the tread will hold through the rain. Want me to schedule it?`
-      : `Morning. Trail work is looking good. Tell me what you knock out and I'll keep the records straight.`
+      : lowest
+        ? `Morning. Trail work is looking good. Tell me what you knock out and I'll keep the records straight.`
+        : `Ready when you are. Plot a trail on the map, or just tell me what you get done — I'll keep the records.`
   return {
     id: 'msg-opening',
     role: 'ai',
@@ -71,6 +73,12 @@ interface Store {
   boundary: LatLng[] | null
   setBoundary: (path: LatLng[] | null) => void
 
+  // Map overlay toggles
+  showBoundary: boolean
+  showElevation: boolean
+  toggleBoundary: () => void
+  toggleElevation: () => void
+
   // derived
   overallPercent: number
   feetComplete: number
@@ -92,6 +100,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(persisted?.tasks ?? seed.tasks)
   const [equipment, setEquipment] = useState<Equipment[]>(persisted?.equipment ?? seed.equipment)
   const [boundary, setBoundary] = useState<LatLng[] | null>(persisted?.boundary ?? null)
+  const [showBoundary, setShowBoundary] = useState(true)
+  const [showElevation, setShowElevation] = useState(false)
   const [chat, setChat] = useState<ChatMessage[]>(() =>
     [openingMessage(initialSegments, seed.weather)],
   )
@@ -175,6 +185,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
 
   const dismissSuggestion = useCallback(() => setSuggestionDismissed(true), [])
+  const toggleBoundary = useCallback(() => setShowBoundary((v) => !v), [])
+  const toggleElevation = useCallback(() => setShowElevation((v) => !v), [])
 
   const addTaskForSuggestion = useCallback(() => {
     const flagged = segments.find((s) => s.aiFlagged)
@@ -251,6 +263,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addSegment,
       boundary,
       setBoundary,
+      showBoundary,
+      showElevation,
+      toggleBoundary,
+      toggleElevation,
       overallPercent,
       feetComplete,
       feetTotal,
@@ -279,6 +295,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addSegment,
       boundary,
       setBoundary,
+      showBoundary,
+      showElevation,
+      toggleBoundary,
+      toggleElevation,
       overallPercent,
       feetComplete,
       feetTotal,

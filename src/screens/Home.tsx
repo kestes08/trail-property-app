@@ -1,6 +1,6 @@
 import { PropertyMapLive } from '../components/PropertyMapLive'
 import { dueLabel, isSoon } from '../format'
-import { mapExternalUrl } from '../maps'
+import { hasMapsKey, mapExternalUrl } from '../maps'
 import { useStore } from '../store'
 import type { Task } from '../types'
 
@@ -20,6 +20,10 @@ export function Home() {
     openTaskCount,
     equipment,
     boundary,
+    showBoundary,
+    showElevation,
+    toggleBoundary,
+    toggleElevation,
     toggleTask,
     setRoute,
   } = useStore()
@@ -54,7 +58,12 @@ export function Home() {
 
       {/* Map card — interactive Google Map with trail overlays */}
       <div className="map-card">
-        <PropertyMapLive property={property} segments={segments} boundary={boundary} />
+        <PropertyMapLive
+          property={property}
+          segments={segments}
+          boundary={showBoundary ? boundary : null}
+          showElevation={showElevation}
+        />
         <a
           className="map-card__open pill"
           href={mapExternalUrl(property)}
@@ -65,6 +74,30 @@ export function Home() {
         </a>
         <div className="map-card__stat pill">{trailCount} trails · 3 zones</div>
       </div>
+
+      {/* Overlay toggles (only meaningful on the live JS map) */}
+      {hasMapsKey() && (
+        <div className="map-toggles">
+          {boundary && (
+            <button
+              className={`toggle-chip ${showBoundary ? 'is-on' : ''}`}
+              aria-pressed={showBoundary}
+              onClick={toggleBoundary}
+            >
+              <span className="toggle-chip__dot" style={{ background: '#3d5a3f' }} />
+              Property lines
+            </button>
+          )}
+          <button
+            className={`toggle-chip ${showElevation ? 'is-on' : ''}`}
+            aria-pressed={showElevation}
+            onClick={toggleElevation}
+          >
+            <span className="toggle-chip__dot" style={{ background: '#9c6b3f' }} />
+            Elevation
+          </button>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="stat-row">
@@ -89,27 +122,31 @@ export function Home() {
           See all
         </button>
       </div>
-      <div className="task-list">
-        {upcoming.map((t) => (
-          <div className="task-row card" key={t.id}>
-            <button
-              className={`checkbox ${t.done ? 'is-done' : ''}`}
-              aria-label={t.done ? 'Mark not done' : 'Mark done'}
-              onClick={() => toggleTask(t.id)}
-            />
-            <div className="task-row__body">
-              <div className="task-row__title">{t.title}</div>
-              <div className="task-row__sub">
-                {moduleLabel[t.module]}
-                {t.zone ? ` · ${t.zone}` : ''}
+      {upcoming.length === 0 ? (
+        <div className="mini-empty card">Nothing scheduled yet.</div>
+      ) : (
+        <div className="task-list">
+          {upcoming.map((t) => (
+            <div className="task-row card" key={t.id}>
+              <button
+                className={`checkbox ${t.done ? 'is-done' : ''}`}
+                aria-label={t.done ? 'Mark not done' : 'Mark done'}
+                onClick={() => toggleTask(t.id)}
+              />
+              <div className="task-row__body">
+                <div className="task-row__title">{t.title}</div>
+                <div className="task-row__sub">
+                  {moduleLabel[t.module]}
+                  {t.zone ? ` · ${t.zone}` : ''}
+                </div>
               </div>
+              <span className={`due-pill ${isSoon(t.dueDate) ? 'is-soon' : ''}`}>
+                {dueLabel(t.dueDate)}
+              </span>
             </div>
-            <span className={`due-pill ${isSoon(t.dueDate) ? 'is-soon' : ''}`}>
-              {dueLabel(t.dueDate)}
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

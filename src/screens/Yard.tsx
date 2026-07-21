@@ -78,6 +78,12 @@ export function Yard() {
         ))}
       </div>
 
+      {yardTasks.length === 0 && (
+        <div className="mini-empty card" style={{ marginTop: 16 }}>
+          No yard tasks yet.
+        </div>
+      )}
+
       {thisWeek.length > 0 && (
         <>
           <div className="section-head">

@@ -440,6 +440,52 @@
   border-radius: 5px;
 }
 
+/* Map overlay toggles */
+.map-toggles {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 30px;
+  border: 1px solid var(--hairline);
+  background: var(--white);
+  color: var(--ink-soft);
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 13px;
+}
+.toggle-chip.is-on {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--cream);
+}
+.toggle-chip__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+.toggle-chip.is-on .toggle-chip__dot {
+  opacity: 1;
+}
+
+/* Small inline empty state */
+.mini-empty {
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-softer);
+}
+
 /* Property boundary card */
 .parcel-card {
   margin-top: 14px;

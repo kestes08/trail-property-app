@@ -13,7 +13,6 @@ const moduleLabel: Record<Task['module'], string> = {
 export function Home() {
   const {
     property,
-    weather,
     segments,
     tasks,
     overallPercent,
@@ -43,15 +42,6 @@ export function Home() {
           <h1 className="head home__title">{property.name}</h1>
           <div className="home__sub">
             {property.location} · {property.acreage} acres
-          </div>
-        </div>
-        <div className="weather-chip">
-          <span className="livedot" style={{ animation: 'none' }} />
-          <div>
-            <div className="num" style={{ fontSize: 18 }}>
-              {weather.tempF}°
-            </div>
-            <div className="weather-chip__cond">{weather.condition}</div>
           </div>
         </div>
       </header>

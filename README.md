@@ -63,13 +63,27 @@ Either way the "Map ↗" pill deep-links to the location full-screen in Google
 Maps. The original hand-drawn map is kept as `src/components/PropertyMap.tsx` if
 you prefer the illustrated look.
 
-### Plotting trails
+### Plotting / recording trails
 
-The app ships with no trails. On the Trail Builder screen (with a Maps key),
-**Plot a trail** puts the map in drawing mode: tap along the route to drop
-points, name the trail, and save. The traced path and its measured length (see
-`src/geo.ts`) are stored, drawn on the property map, and tracked from then on —
-log build progress on it by name through the assistant.
+The app ships with no trails. On the Trail Builder screen (with a Maps key)
+there are two ways to add one:
+
+- **Record by walking** — uses the phone's GPS (`src/useTrailTracker.ts`,
+  Geolocation `watchPosition`) to record the trail as you walk it, with live
+  distance and a follow-the-dot map. Poor fixes and jitter are filtered out.
+  Requires HTTPS + location permission.
+- **Plot by tapping** — tap along the route on the map to drop points.
+
+Either way you name it and save; the path and its measured length (`src/geo.ts`)
+are stored, drawn on the property map, and tracked — log build progress on it by
+name through the assistant.
+
+### Entering tasks & equipment
+
+Yard tasks and equipment are added with the **+** button on those screens
+(inline forms; `addTask` / `addEquipment` in the store). Equipment status
+(GOOD / WATCH / DUE) is computed from hours-vs-interval. Rows have a delete
+control, and everything persists.
 
 ### Property lines (GIS)
 

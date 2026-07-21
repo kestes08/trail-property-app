@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { interpret, type AIResult } from './ai'
+import { interpret, statusForEquipment, type AIResult } from './ai'
 import * as seed from './data'
 import { loadState, saveState } from './persist'
 import type {
@@ -19,7 +19,27 @@ import type {
   Task,
   TrailSegment,
   WeatherSnapshot,
+  YardZone,
 } from './types'
+
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const raw = parts.length >= 2 ? parts[0][0] + parts[1][0] : name.trim().slice(0, 2)
+  return raw.toUpperCase()
+}
+
+export interface NewTaskInput {
+  title: string
+  zone?: YardZone
+  dueDate: string
+  durationMin?: number
+}
+
+export interface NewEquipmentInput {
+  name: string
+  hoursSinceService: number
+  serviceIntervalHours: number
+}
 
 export type TabKey = 'home' | 'trails' | 'yard' | 'gear' | 'stats'
 export type Route = TabKey | 'ranger'
@@ -70,6 +90,10 @@ interface Store {
   dismissSuggestion: () => void
   addTaskForSuggestion: () => void
   addSegment: (name: string, path: LatLng[], feetTotal: number) => void
+  addTask: (input: NewTaskInput) => void
+  deleteTask: (id: string) => void
+  addEquipment: (input: NewEquipmentInput) => void
+  deleteEquipment: (id: string) => void
   boundary: LatLng[] | null
   setBoundary: (path: LatLng[] | null) => void
 
@@ -226,6 +250,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [flashToast],
   )
 
+  const addTask = useCallback(
+    (input: NewTaskInput) => {
+      const task: Task = {
+        id: uid('task'),
+        title: input.title.trim(),
+        module: 'yard',
+        zone: input.zone,
+        dueDate: input.dueDate,
+        done: false,
+        durationMin: input.durationMin,
+      }
+      setTasks((ts) => [...ts, task])
+      flashToast(`Added ${task.title}`)
+    },
+    [flashToast],
+  )
+
+  const deleteTask = useCallback((id: string) => {
+    setTasks((ts) => ts.filter((t) => t.id !== id))
+  }, [])
+
+  const addEquipment = useCallback(
+    (input: NewEquipmentInput) => {
+      const item: Equipment = {
+        id: uid('eq'),
+        name: input.name.trim(),
+        hoursSinceService: Math.max(0, input.hoursSinceService),
+        serviceIntervalHours: Math.max(1, input.serviceIntervalHours),
+        status: 'good',
+        initials: initialsFor(input.name),
+      }
+      item.status = statusForEquipment(item)
+      setEquipment((es) => [...es, item])
+      flashToast(`Added ${item.name}`)
+    },
+    [flashToast],
+  )
+
+  const deleteEquipment = useCallback((id: string) => {
+    setEquipment((es) => es.filter((e) => e.id !== id))
+  }, [])
+
   // Persist the real data whenever it changes.
   useEffect(() => {
     saveState({ segments, tasks, equipment, boundary })
@@ -261,6 +327,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissSuggestion,
       addTaskForSuggestion,
       addSegment,
+      addTask,
+      deleteTask,
+      addEquipment,
+      deleteEquipment,
       boundary,
       setBoundary,
       showBoundary,
@@ -293,6 +363,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       dismissSuggestion,
       addTaskForSuggestion,
       addSegment,
+      addTask,
+      deleteTask,
+      addEquipment,
+      deleteEquipment,
       boundary,
       setBoundary,
       showBoundary,

@@ -25,6 +25,10 @@ interface Props {
   boundary?: LatLng[] | null
   /** Overlay USGS elevation contour lines from The National Map. */
   showElevation?: boolean
+  /** GPS recording mode: draw the draft as a clean track (line + current dot). */
+  trackMode?: boolean
+  /** Pan the map to this point when it changes (live GPS follow). */
+  recenter?: LatLng
 }
 
 // Slippy tile (x/y/z) → Web Mercator bbox "xmin,ymin,xmax,ymax" for ArcGIS export.
@@ -51,6 +55,8 @@ export function PropertyMapLive({
   draftPath,
   boundary,
   showElevation,
+  trackMode,
+  recenter,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -156,23 +162,46 @@ export function PropertyMapLive({
       )
     })
 
-    // The trail being traced right now.
+    // The trail being traced/recorded right now.
     if (draftPath && draftPath.length > 0) {
       if (draftPath.length >= 2) {
         overlaysRef.current.push(
           new google.maps.Polyline({ path: draftPath, map, strokeColor: '#c8743a', strokeOpacity: 1, strokeWeight: 4, zIndex: 6 }),
         )
       }
-      draftPath.forEach((pt, i) => {
+      if (trackMode) {
+        // GPS: just the start point and a distinct current-position dot.
+        const start = draftPath[0]
+        const current = draftPath[draftPath.length - 1]
         overlaysRef.current.push(
           new google.maps.Marker({
-            position: pt,
+            position: start,
             map,
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: i === 0 ? 6 : 4, fillColor: '#ffffff', fillOpacity: 1, strokeColor: '#c8743a', strokeWeight: 2 },
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 5, fillColor: '#ffffff', fillOpacity: 1, strokeColor: '#c8743a', strokeWeight: 2 },
             zIndex: 7,
           }),
         )
-      })
+        overlaysRef.current.push(
+          new google.maps.Marker({
+            position: current,
+            map,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#c8743a', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 },
+            zIndex: 8,
+          }),
+        )
+      } else {
+        // Tap-plotting: a marker at every vertex so each tap is visible.
+        draftPath.forEach((pt, i) => {
+          overlaysRef.current.push(
+            new google.maps.Marker({
+              position: pt,
+              map,
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: i === 0 ? 6 : 4, fillColor: '#ffffff', fillOpacity: 1, strokeColor: '#c8743a', strokeWeight: 2 },
+              zIndex: 7,
+            }),
+          )
+        })
+      }
     }
 
     // Fit to the property (boundary + trails) when not mid-trace, so panning
@@ -180,7 +209,14 @@ export function PropertyMapLive({
     if ((!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath, boundary])
+  }, [ready, segments, draftPath, boundary, trackMode])
+
+  // Live GPS follow: keep the current position centered while recording.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!ready || !map || !recenter) return
+    map.panTo(recenter)
+  }, [ready, recenter?.lat, recenter?.lng])
 
   // Toggle the USGS elevation-contour tile overlay.
   useEffect(() => {

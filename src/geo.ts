@@ -20,3 +20,8 @@ export function pathLengthFeet(path: LatLng[]): number {
   for (let i = 1; i < path.length; i++) ft += segmentFeet(path[i - 1], path[i])
   return Math.round(ft)
 }
+
+/** Distance between two points in meters. */
+export function distanceMeters(a: LatLng, b: LatLng): number {
+  return segmentFeet(a, b) / 3.28084
+}

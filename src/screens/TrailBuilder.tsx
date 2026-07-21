@@ -5,9 +5,10 @@ import { pathLengthFeet } from '../geo'
 import { hasMapsKey } from '../maps'
 import { fetchParcelAt } from '../parcel'
 import { useStore } from '../store'
+import { useTrailTracker } from '../useTrailTracker'
 import type { LatLng, TrailSegment } from '../types'
 
-type DrawMode = null | 'trail' | 'boundary'
+type DrawMode = null | 'trail' | 'boundary' | 'gps'
 
 function pctColor(seg: TrailSegment): string {
   if (seg.aiFlagged) return 'var(--accent)'
@@ -40,28 +41,44 @@ export function TrailBuilder() {
   const [name, setName] = useState('')
   const [gisLoading, setGisLoading] = useState(false)
   const [gisError, setGisError] = useState<string | null>(null)
+  const tracker = useTrailTracker()
 
   const active = segments.filter((s) => s.status !== 'planned')
   const planned = segments.filter((s) => s.status === 'planned')
-  const draftFeet = pathLengthFeet(draftPath)
 
-  function start(m: Exclude<DrawMode, null>) {
+  // The path in progress: GPS points while recording, otherwise tapped points.
+  const activePath = mode === 'gps' ? tracker.points : draftPath
+  const draftFeet = pathLengthFeet(activePath)
+
+  function start(m: 'trail' | 'boundary') {
     setDraftPath([])
     setName('')
     setMode(m)
   }
 
-  function save() {
-    if (mode === 'trail') {
-      if (draftPath.length < 2 || !name.trim()) return
-      addSegment(name, draftPath, draftFeet)
-    } else if (mode === 'boundary') {
-      if (draftPath.length < 3) return
-      setBoundary(draftPath)
-    }
+  function startGps() {
+    setName('')
+    tracker.reset()
+    tracker.start()
+    setMode('gps')
+  }
+
+  function exitDraw() {
+    tracker.reset()
     setMode(null)
     setDraftPath([])
     setName('')
+  }
+
+  function save() {
+    if (mode === 'trail' || mode === 'gps') {
+      if (activePath.length < 2 || !name.trim()) return
+      addSegment(name, activePath, draftFeet)
+    } else if (mode === 'boundary') {
+      if (activePath.length < 3) return
+      setBoundary(activePath)
+    }
+    exitDraw()
   }
 
   async function importParcel() {
@@ -82,7 +99,7 @@ export function TrailBuilder() {
   }
 
   const saveDisabled =
-    mode === 'trail' ? draftPath.length < 2 || !name.trim() : draftPath.length < 3
+    mode === 'boundary' ? activePath.length < 3 : activePath.length < 2 || !name.trim()
 
   return (
     <div className="screen-pad">
@@ -110,24 +127,38 @@ export function TrailBuilder() {
             boundary={boundary}
             showElevation={showElevation}
             height={300}
-            draftPath={draftPath}
-            onAddPoint={(pt) => setDraftPath((p) => [...p, pt])}
+            draftPath={activePath}
+            trackMode={mode === 'gps'}
+            recenter={mode === 'gps' && activePath.length ? activePath[activePath.length - 1] : undefined}
+            onAddPoint={mode === 'gps' ? undefined : (pt) => setDraftPath((p) => [...p, pt])}
           />
           <div className="draw__panel">
+            {mode === 'gps' && (
+              <div className={`gps-status ${tracker.recording ? 'is-live' : ''}`}>
+                <span className="gps-status__dot" />
+                {tracker.recording ? 'Recording — walk the trail' : 'Paused'}
+                {tracker.accuracy != null && (
+                  <span className="gps-status__acc">±{Math.round(tracker.accuracy)} m</span>
+                )}
+              </div>
+            )}
             <p className="draw__hint">
               {mode === 'trail'
                 ? 'Tap along the route on the map to drop points. Each tap extends the trail line.'
-                : 'Tap each corner of your property, walking the boundary in order. Tap Save to close the shape.'}
+                : mode === 'boundary'
+                  ? 'Tap each corner of your property, walking the boundary in order. Tap Save to close the shape.'
+                  : 'Walk the trail with your phone. Points record automatically. Pause anytime, then name it and save.'}
             </p>
             <div className="draw__stats">
               <span>
-                <strong className="num">{draftPath.length}</strong> point{draftPath.length === 1 ? '' : 's'}
+                <strong className="num">{activePath.length}</strong> point{activePath.length === 1 ? '' : 's'}
               </span>
               <span>
                 <strong className="num">{draftFeet.toLocaleString()}</strong> ft{mode === 'boundary' ? ' perimeter' : ''}
               </span>
             </div>
-            {mode === 'trail' && (
+            {tracker.error && mode === 'gps' && <p className="parcel-card__error">{tracker.error}</p>}
+            {mode !== 'boundary' && (
               <input
                 className="draw__input"
                 value={name}
@@ -136,14 +167,23 @@ export function TrailBuilder() {
               />
             )}
             <div className="draw__actions">
-              <button className="btn btn--ghost" onClick={() => setDraftPath((p) => p.slice(0, -1))} disabled={draftPath.length === 0}>
-                Undo point
-              </button>
-              <button className="btn btn--ghost" onClick={() => setMode(null)}>
+              {mode === 'gps' ? (
+                <button
+                  className="btn btn--ghost"
+                  onClick={() => (tracker.recording ? tracker.pause() : tracker.start())}
+                >
+                  {tracker.recording ? 'Pause' : 'Resume'}
+                </button>
+              ) : (
+                <button className="btn btn--ghost" onClick={() => setDraftPath((p) => p.slice(0, -1))} disabled={draftPath.length === 0}>
+                  Undo point
+                </button>
+              )}
+              <button className="btn btn--ghost" onClick={exitDraw}>
                 Cancel
               </button>
               <button className="btn btn--filled" onClick={save} disabled={saveDisabled}>
-                {mode === 'trail' ? 'Save trail' : 'Save boundary'}
+                {mode === 'boundary' ? 'Save boundary' : 'Save trail'}
               </button>
             </div>
           </div>
@@ -204,13 +244,18 @@ export function TrailBuilder() {
                 assistant, and it'll show on your property map.
               </p>
               {hasMapsKey() ? (
-                <button className="btn btn--filled" onClick={() => start('trail')}>
-                  Plot a trail
-                </button>
+                <div className="empty__actions">
+                  <button className="btn btn--filled" onClick={startGps}>
+                    Record by walking
+                  </button>
+                  <button className="btn btn--ghost" onClick={() => start('trail')}>
+                    Plot by tapping
+                  </button>
+                </div>
               ) : (
                 <p className="empty__note">
                   Plotting on the map needs your Google Maps key. Once the site is deployed with{' '}
-                  <code>VITE_GOOGLE_MAPS_API_KEY</code> set, this button appears here.
+                  <code>VITE_GOOGLE_MAPS_API_KEY</code> set, these appear here.
                 </p>
               )}
             </div>
@@ -250,9 +295,14 @@ export function TrailBuilder() {
               <div className="section-head">
                 <span className="label">Segments</span>
                 {hasMapsKey() && (
-                  <button className="link" onClick={() => start('trail')}>
-                    + Plot a trail
-                  </button>
+                  <div className="section-head__actions">
+                    <button className="link" onClick={startGps}>
+                      + Record
+                    </button>
+                    <button className="link" onClick={() => start('trail')}>
+                      + Tap
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="seg-list">

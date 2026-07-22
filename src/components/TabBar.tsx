@@ -19,8 +19,20 @@ const tabs: TabDef[] = [
   {
     key: 'trails',
     label: 'Trails',
+    // Winding dotted route with a start point and a destination marker.
     icon: (a) => (
-      <path d="M5 20c0-4 4-4 4-8s-4-4-4-8m8 16c0-4 4-4 4-8" stroke={stroke(a)} strokeWidth="1.7" strokeLinecap="round" fill="none" />
+      <>
+        <path
+          d="M5 20 C 12 18 3 13 10 11 C 16 9.5 11 6 16 4"
+          stroke={stroke(a)}
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeDasharray="0.4 3.4"
+          fill="none"
+        />
+        <circle cx="5" cy="20" r="1.7" fill={stroke(a)} />
+        <circle cx="16" cy="4" r="1.7" fill={stroke(a)} />
+      </>
     ),
   },
   {
@@ -33,8 +45,16 @@ const tabs: TabDef[] = [
   {
     key: 'gear',
     label: 'Gear',
+    // Wrench — reads as tools / maintenance.
     icon: (a) => (
-      <path d="M11 14.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-3.5-1.6-.5.6-1.6-1.4-1.4-1.6.6L12.5 6l-.5-1.6h-2L9.5 6l-1.6-.5-1.4 1.4.6 1.6L5 11l1.6.5-.6 1.6 1.4 1.4 1.6-.6.5 1.6h2l.5-1.6 1.6.6 1.4-1.4-.6-1.6L18 11Z" stroke={stroke(a)} strokeWidth="1.4" strokeLinejoin="round" fill="none" />
+      <path
+        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+        stroke={stroke(a)}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="none"
+      />
     ),
   },
   {

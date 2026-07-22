@@ -3,8 +3,8 @@ import { dueLabel, isSoon } from '../format'
 import { useStore } from '../store'
 import type { Task, YardZone } from '../types'
 
-const zones: Array<'All' | YardZone> = ['All', 'Meadow', 'Garden', 'Drive']
-const addZones: YardZone[] = ['Meadow', 'Garden', 'Drive']
+const zones: Array<'All' | YardZone> = ['All', 'Yard', 'Woods', 'Driveway']
+const addZones: YardZone[] = ['Yard', 'Woods', 'Driveway']
 
 function todayISO(): string {
   const d = new Date()

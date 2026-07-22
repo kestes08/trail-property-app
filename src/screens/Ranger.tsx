@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { RangerLogo } from '../components/RangerLogo'
 import { useStore } from '../store'
 import type { ChatMessage } from '../types'
 
@@ -41,7 +40,7 @@ export function Ranger() {
           </svg>
         </button>
         <div className="ranger__avatar">
-          <RangerLogo size={30} />
+          <span className="livedot" />
         </div>
         <div>
           <div className="head ranger__name">Ranger</div>

@@ -29,7 +29,7 @@ export interface TrailSegment {
 }
 
 export type TaskModule = 'trail' | 'yard' | 'equipment'
-export type YardZone = 'Meadow' | 'Garden' | 'Drive'
+export type YardZone = 'Yard' | 'Woods' | 'Driveway'
 
 export interface Task {
   id: string

@@ -18,6 +18,8 @@ export default function App() {
   const onRanger = route === 'ranger'
   const standalone = useStandalone()
   const [splash, setSplash] = useState(true)
+  // Use public/splash.jpg if it's been added; otherwise the SVG scene.
+  const [useSplashImage, setUseSplashImage] = useState(true)
 
   useEffect(() => {
     const t = window.setTimeout(() => setSplash(false), 2200)
@@ -45,7 +47,16 @@ export default function App() {
 
       {splash && (
         <div className="splash">
-          <SplashArt />
+          {useSplashImage ? (
+            <img
+              className="splash__art"
+              src={`${import.meta.env.BASE_URL}splash.jpg`}
+              alt=""
+              onError={() => setUseSplashImage(false)}
+            />
+          ) : (
+            <SplashArt />
+          )}
           <div className="splash__word">Ridgeline</div>
         </div>
       )}

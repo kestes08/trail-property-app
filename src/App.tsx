@@ -50,7 +50,7 @@ export default function App() {
           {useSplashImage ? (
             <img
               className="splash__art"
-              src={`${import.meta.env.BASE_URL}splash.jpg`}
+              src={`${import.meta.env.BASE_URL}splash.png`}
               alt=""
               onError={() => setUseSplashImage(false)}
             />

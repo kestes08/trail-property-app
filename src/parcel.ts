@@ -5,49 +5,14 @@ import type { LatLng } from './types'
 const PARCEL_QUERY =
   'https://gismaps.vdem.virginia.gov/arcgis/rest/services/VA_Base_Layers/VA_Parcels/FeatureServer/0/query'
 
+// Public CORS proxy used only if the service refuses a direct browser request
+// (it sends no CORS headers). It fetches server-side and echoes the JSON back
+// with CORS headers. Only public parcel data passes through it.
+const CORS_PROXY = 'https://api.allorigins.win/raw?url='
+
 export interface ParcelResult {
   boundary: LatLng[]
   parcelId?: string
-}
-
-/**
- * ArcGIS query over JSONP. Browsers block cross-origin `fetch` to services that
- * don't send CORS headers (which is why the plain fetch failed), but a JSONP
- * `<script>` request isn't subject to CORS. ArcGIS supports it via `callback`.
- */
-function arcgisJsonp(baseUrl: string, params: Record<string, string>): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const cbName = `__arcgisCb_${Math.random().toString(36).slice(2)}`
-    const script = document.createElement('script')
-    let settled = false
-
-    const cleanup = () => {
-      delete (window as unknown as Record<string, unknown>)[cbName]
-      script.remove()
-    }
-    ;(window as unknown as Record<string, (data: unknown) => void>)[cbName] = (data) => {
-      settled = true
-      cleanup()
-      resolve(data)
-    }
-
-    const qs = new URLSearchParams({ ...params, f: 'json', callback: cbName }).toString()
-    script.src = `${baseUrl}?${qs}`
-    script.onerror = () => {
-      if (!settled) {
-        cleanup()
-        reject(new Error('Parcel service unreachable'))
-      }
-    }
-    document.head.appendChild(script)
-
-    window.setTimeout(() => {
-      if (!settled) {
-        cleanup()
-        reject(new Error('Parcel service timed out'))
-      }
-    }, 15000)
-  })
 }
 
 interface ArcGISFeature {
@@ -59,9 +24,23 @@ interface ArcGISResponse {
   error?: { message?: string }
 }
 
+async function queryArcgis(url: string): Promise<ArcGISResponse> {
+  // 1) Direct — works if the service happens to send CORS headers.
+  try {
+    const res = await fetch(url)
+    if (res.ok) return (await res.json()) as ArcGISResponse
+  } catch {
+    // CORS / network blocked — fall through to the proxy.
+  }
+  // 2) Via a public CORS proxy.
+  const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`)
+  if (!res.ok) throw new Error(`Parcel service returned ${res.status}`)
+  return (await res.json()) as ArcGISResponse
+}
+
 /** Look up the parcel polygon containing a point. Returns null if none found. */
 export async function fetchParcelAt(lat: number, lng: number): Promise<ParcelResult | null> {
-  const data = (await arcgisJsonp(PARCEL_QUERY, {
+  const params = new URLSearchParams({
     where: '1=1',
     geometry: `${lng},${lat}`,
     geometryType: 'esriGeometryPoint',
@@ -70,8 +49,9 @@ export async function fetchParcelAt(lat: number, lng: number): Promise<ParcelRes
     spatialRel: 'esriSpatialRelIntersects',
     outFields: '*',
     returnGeometry: 'true',
-  })) as ArcGISResponse
-
+    f: 'json',
+  })
+  const data = await queryArcgis(`${PARCEL_QUERY}?${params.toString()}`)
   if (data.error) throw new Error(data.error.message || 'Parcel service error')
 
   const feature = data.features?.[0]

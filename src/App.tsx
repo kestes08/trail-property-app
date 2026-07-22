@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './app.css'
 import { PromptBar } from './components/PromptBar'
+import { SplashArt } from './components/SplashArt'
 import { StatusBar } from './components/StatusBar'
 import { TabBar } from './components/TabBar'
 import { Equipment } from './screens/Equipment'
@@ -19,7 +20,7 @@ export default function App() {
   const [splash, setSplash] = useState(true)
 
   useEffect(() => {
-    const t = window.setTimeout(() => setSplash(false), 1700)
+    const t = window.setTimeout(() => setSplash(false), 2200)
     return () => window.clearTimeout(t)
   }, [])
 
@@ -44,6 +45,7 @@ export default function App() {
 
       {splash && (
         <div className="splash">
+          <SplashArt />
           <div className="splash__word">Ridgeline</div>
         </div>
       )}

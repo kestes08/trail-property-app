@@ -47,9 +47,7 @@ export function Home() {
             {greeting()}, {property.owner}
           </div>
           <h1 className="head home__title">{property.address}</h1>
-          <div className="home__sub">
-            {property.location} · {property.acreage} acres
-          </div>
+          <div className="home__sub">{property.location}</div>
         </div>
       </header>
 

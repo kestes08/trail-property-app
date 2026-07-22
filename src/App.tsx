@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import './app.css'
 import { PromptBar } from './components/PromptBar'
 import { StatusBar } from './components/StatusBar'
@@ -15,6 +16,12 @@ export default function App() {
   const { route, toast } = useStore()
   const onRanger = route === 'ranger'
   const standalone = useStandalone()
+  const [splash, setSplash] = useState(true)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setSplash(false), 1700)
+    return () => window.clearTimeout(t)
+  }, [])
 
   return (
     <div className={`phone ${onRanger ? 'phone--dark' : ''} ${standalone ? 'is-standalone' : ''}`}>
@@ -34,6 +41,12 @@ export default function App() {
 
       <PromptBar />
       {!onRanger && <TabBar />}
+
+      {splash && (
+        <div className="splash">
+          <div className="splash__word">Ridgeline</div>
+        </div>
+      )}
     </div>
   )
 }

@@ -440,6 +440,35 @@
   border-radius: 5px;
 }
 
+/* Launch splash */
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: var(--forest-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: splashFade 1.7s ease forwards;
+}
+.splash__word {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 7px;
+  color: var(--cream);
+}
+@keyframes splashFade {
+  0%,
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* Add button + inline add forms */
 .add-btn {
   margin-left: auto;
@@ -792,7 +821,7 @@
   width: 42px;
   height: 42px;
   border-radius: 13px;
-  background: var(--ai-bubble);
+  background: var(--cream);
   border: 1px solid var(--ai-bubble-border);
   display: flex;
   align-items: center;

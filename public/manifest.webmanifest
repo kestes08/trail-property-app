@@ -1,7 +1,7 @@
 {
-  "name": "Hollow Ridge",
-  "short_name": "Hollow Ridge",
-  "description": "Manage trails, yard tasks, and equipment at Hollow Ridge.",
+  "name": "Ridgeline",
+  "short_name": "Ridgeline",
+  "description": "Manage trails, yard tasks, and equipment on your property.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

@@ -8,7 +8,7 @@ import { useStore } from '../store'
 import { useTrailTracker } from '../useTrailTracker'
 import type { LatLng, TrailSegment } from '../types'
 
-type DrawMode = null | 'trail' | 'boundary' | 'gps'
+type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import'
 
 function pctColor(seg: TrailSegment): string {
   if (seg.aiFlagged) return 'var(--accent)'
@@ -30,8 +30,9 @@ export function TrailBuilder() {
     dismissSuggestion,
     addTaskForSuggestion,
     addSegment,
-    boundary,
-    setBoundary,
+    boundaries,
+    addBoundary,
+    clearBoundaries,
     showElevation,
     setRoute,
   } = useStore()
@@ -50,9 +51,10 @@ export function TrailBuilder() {
   const activePath = mode === 'gps' ? tracker.points : draftPath
   const draftFeet = pathLengthFeet(activePath)
 
-  function start(m: 'trail' | 'boundary') {
+  function start(m: 'trail' | 'boundary' | 'import') {
     setDraftPath([])
     setName('')
+    setGisError(null)
     setMode(m)
   }
 
@@ -76,23 +78,25 @@ export function TrailBuilder() {
       addSegment(name, activePath, draftFeet)
     } else if (mode === 'boundary') {
       if (activePath.length < 3) return
-      setBoundary(activePath)
+      addBoundary(activePath)
     }
     exitDraw()
   }
 
-  async function importParcel() {
+  // Tap inside a parcel to pull its boundary from the GIS service.
+  async function importAt(pt: LatLng) {
+    if (gisLoading) return
     setGisError(null)
     setGisLoading(true)
     try {
-      const result = await fetchParcelAt(property.lat, property.lng)
+      const result = await fetchParcelAt(pt.lat, pt.lng)
       if (result?.boundary?.length) {
-        setBoundary(result.boundary)
+        addBoundary(result.boundary)
       } else {
-        setGisError('No parcel found at your property center. Check the map is centered on your land, or trace it.')
+        setGisError('No parcel found there — tap right inside a parcel, or trace it instead.')
       }
     } catch {
-      setGisError("Couldn't reach the Virginia parcel service from your browser. You can trace your lines instead.")
+      setGisError("Couldn't reach the parcel service. Try again, or trace the boundary instead.")
     } finally {
       setGisLoading(false)
     }
@@ -119,14 +123,48 @@ export function TrailBuilder() {
         </div>
       </header>
 
-      {mode ? (
+      {mode === 'import' ? (
         <div className="draw">
           <PropertyMapLive
             property={property}
             segments={segments}
-            boundary={boundary}
+            boundaries={boundaries}
             showElevation={showElevation}
             height={300}
+            autoFit={false}
+            onAddPoint={importAt}
+          />
+          <div className="draw__panel">
+            <p className="draw__hint">
+              Tap inside each of your parcels — it pulls that parcel's outline from the state GIS and adds it. Tap all
+              three, then Done.
+            </p>
+            <div className="draw__stats">
+              <span>
+                <strong className="num">{boundaries.length}</strong> parcel{boundaries.length === 1 ? '' : 's'} added
+              </span>
+              {gisLoading && <span>Looking up…</span>}
+            </div>
+            {gisError && <p className="parcel-card__error">{gisError}</p>}
+            <div className="draw__actions">
+              <button className="btn btn--ghost" onClick={() => start('boundary')}>
+                Trace instead
+              </button>
+              <button className="btn btn--filled" onClick={exitDraw}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : mode ? (
+        <div className="draw">
+          <PropertyMapLive
+            property={property}
+            segments={segments}
+            boundaries={boundaries}
+            showElevation={showElevation}
+            height={300}
+            autoFit={false}
             draftPath={activePath}
             trackMode={mode === 'gps'}
             recenter={mode === 'gps' && activePath.length ? activePath[activePath.length - 1] : undefined}
@@ -190,45 +228,39 @@ export function TrailBuilder() {
         </div>
       ) : (
         <>
-          {/* Property boundary */}
+          {/* Property lines / parcels */}
           <div className="parcel-card">
             <div className="parcel-card__head">
               <span className="label">Property lines</span>
-              {boundary && <span className="parcel-card__badge">{boundary.length} corners</span>}
+              {boundaries.length > 0 && (
+                <span className="parcel-card__badge">
+                  {boundaries.length} parcel{boundaries.length === 1 ? '' : 's'}
+                </span>
+              )}
             </div>
-            {boundary ? (
-              <p className="parcel-card__body">Your boundary is drawn on the property map.</p>
-            ) : (
-              <p className="parcel-card__body">
-                Show your property lines: pull them from Virginia's parcel GIS, or trace them on the map.
-              </p>
-            )}
+            <p className="parcel-card__body">
+              {boundaries.length > 0
+                ? 'Your parcels are shaded on the property map. Add another, or clear to start over.'
+                : 'Add each of your parcels: tap inside it to pull it from the state GIS, or trace it on the map.'}
+            </p>
             {hasMapsKey() ? (
               <div className="parcel-card__actions">
-                {boundary ? (
-                  <>
-                    <button className="btn btn--ghost" onClick={() => start('boundary')}>
-                      Re-trace
-                    </button>
-                    <button className="btn btn--ghost" onClick={() => setBoundary(null)}>
-                      Remove
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="btn btn--filled" onClick={importParcel} disabled={gisLoading}>
-                      {gisLoading ? 'Looking up…' : 'Import from VA GIS'}
-                    </button>
-                    <button className="btn btn--ghost" onClick={() => start('boundary')}>
-                      Trace it
-                    </button>
-                  </>
+                <button className="btn btn--filled" onClick={() => start('import')}>
+                  Add by GIS
+                </button>
+                <button className="btn btn--ghost" onClick={() => start('boundary')}>
+                  Trace one
+                </button>
+                {boundaries.length > 0 && (
+                  <button className="btn btn--ghost" onClick={clearBoundaries}>
+                    Clear all
+                  </button>
                 )}
               </div>
             ) : (
               <p className="parcel-card__note">Property lines show once the site is deployed with your Google Maps key.</p>
             )}
-            {gisError && <p className="parcel-card__error">{gisError}</p>}
+            {gisError && mode === null && <p className="parcel-card__error">{gisError}</p>}
           </div>
 
           {segments.length === 0 ? (

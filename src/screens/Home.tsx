@@ -25,7 +25,7 @@ export function Home() {
     overallPercent,
     openTaskCount,
     equipment,
-    boundary,
+    boundaries,
     showBoundary,
     showElevation,
     toggleBoundary,
@@ -56,7 +56,7 @@ export function Home() {
         <PropertyMapLive
           property={property}
           segments={segments}
-          boundary={showBoundary ? boundary : null}
+          boundaries={showBoundary ? boundaries : []}
           showElevation={showElevation}
         />
         <a
@@ -73,7 +73,7 @@ export function Home() {
       {/* Overlay toggles (only meaningful on the live JS map) */}
       {hasMapsKey() && (
         <div className="map-toggles">
-          {boundary && (
+          {boundaries.length > 0 && (
             <button
               className={`toggle-chip ${showBoundary ? 'is-on' : ''}`}
               aria-pressed={showBoundary}

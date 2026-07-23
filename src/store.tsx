@@ -94,8 +94,10 @@ interface Store {
   deleteTask: (id: string) => void
   addEquipment: (input: NewEquipmentInput) => void
   deleteEquipment: (id: string) => void
-  boundary: LatLng[] | null
-  setBoundary: (path: LatLng[] | null) => void
+  boundaries: LatLng[][]
+  addBoundary: (poly: LatLng[]) => void
+  removeBoundary: (index: number) => void
+  clearBoundaries: () => void
 
   // Map overlay toggles
   showBoundary: boolean
@@ -123,7 +125,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [segments, setSegments] = useState<TrailSegment[]>(initialSegments)
   const [tasks, setTasks] = useState<Task[]>(persisted?.tasks ?? seed.tasks)
   const [equipment, setEquipment] = useState<Equipment[]>(persisted?.equipment ?? seed.equipment)
-  const [boundary, setBoundary] = useState<LatLng[] | null>(persisted?.boundary ?? null)
+  const [boundaries, setBoundaries] = useState<LatLng[][]>(
+    persisted?.boundaries ?? (persisted?.boundary ? [persisted.boundary] : []),
+  )
   const [showBoundary, setShowBoundary] = useState(true)
   const [showElevation, setShowElevation] = useState(false)
   const [chat, setChat] = useState<ChatMessage[]>(() =>
@@ -209,6 +213,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
 
   const dismissSuggestion = useCallback(() => setSuggestionDismissed(true), [])
+  const addBoundary = useCallback((poly: LatLng[]) => setBoundaries((b) => [...b, poly]), [])
+  const removeBoundary = useCallback(
+    (index: number) => setBoundaries((b) => b.filter((_, i) => i !== index)),
+    [],
+  )
+  const clearBoundaries = useCallback(() => setBoundaries([]), [])
   const toggleBoundary = useCallback(() => setShowBoundary((v) => !v), [])
   const toggleElevation = useCallback(() => setShowElevation((v) => !v), [])
 
@@ -294,8 +304,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Persist the real data whenever it changes.
   useEffect(() => {
-    saveState({ segments, tasks, equipment, boundary })
-  }, [segments, tasks, equipment, boundary])
+    saveState({ segments, tasks, equipment, boundaries })
+  }, [segments, tasks, equipment, boundaries])
 
   const feetComplete = segments.reduce((a, s) => a + s.feetComplete, 0)
   const feetTotal = segments.reduce((a, s) => a + s.feetTotal, 0)
@@ -331,8 +341,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteTask,
       addEquipment,
       deleteEquipment,
-      boundary,
-      setBoundary,
+      boundaries,
+      addBoundary,
+      removeBoundary,
+      clearBoundaries,
       showBoundary,
       showElevation,
       toggleBoundary,
@@ -367,8 +379,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteTask,
       addEquipment,
       deleteEquipment,
-      boundary,
-      setBoundary,
+      boundaries,
+      addBoundary,
+      removeBoundary,
+      clearBoundaries,
       showBoundary,
       showElevation,
       toggleBoundary,

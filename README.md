@@ -91,17 +91,19 @@ control, and everything persists.
 The Trail Builder screen can show the property boundary two ways (`src/parcel.ts`,
 rendered by `PropertyMapLive`):
 
-- **Import from VA GIS** — queries Virginia's statewide parcel FeatureServer
-  (VGIN/VDEM) at the property center and draws the returned parcel polygon. The
-  fetch runs in the browser; parcel boundaries are cartographic/approximate, not
-  a survey, and the button falls back gracefully if the service is unreachable
-  or blocks CORS.
-- **Trace it** — tap each corner of the property on the map to draw the boundary
-  by hand. Always available, accurate to what you know your lines to be.
+The property can hold **multiple parcels** (`boundaries: LatLng[][]` in the
+store). Add each one two ways:
 
-The boundary is shaded on the property map (Home) and persists like everything
-else. Set the property's real `lat`/`lng` in `src/data.ts` so both the map center
-and the GIS lookup target the right land.
+- **Add by GIS** — tap inside a parcel on the map; it queries Virginia's
+  statewide parcel FeatureServer (VGIN/VDEM) at that point and adds the returned
+  polygon. The request tries a direct fetch, then a public CORS proxy
+  (`src/parcel.ts`), since the service sends no CORS headers. Parcel data is
+  cartographic/approximate, not a survey.
+- **Trace one** — tap the corners of a parcel to draw it by hand. Always
+  available and accurate to what you know your lines to be.
+
+All parcels are shaded on the property map (Home) and persist. Set the
+property's real `lat`/`lng` in `src/data.ts` so the map centers on the land.
 
 ### Map overlays (toggles)
 

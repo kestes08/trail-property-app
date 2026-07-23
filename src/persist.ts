@@ -8,6 +8,8 @@ export interface PersistedState {
   segments: TrailSegment[]
   tasks: Task[]
   equipment: Equipment[]
+  boundaries?: LatLng[][]
+  /** Legacy single boundary — migrated to `boundaries` on load. */
   boundary?: LatLng[] | null
 }
 

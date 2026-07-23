@@ -21,10 +21,12 @@ interface Props {
   onAddPoint?: (point: LatLng) => void
   /** In-progress path being traced, drawn on top in the accent color. */
   draftPath?: LatLng[]
-  /** Property boundary polygon (shaded parcel) drawn beneath the trails. */
-  boundary?: LatLng[] | null
+  /** Property/parcel polygons (shaded) drawn beneath the trails. */
+  boundaries?: LatLng[][]
   /** Overlay USGS elevation contour lines from The National Map. */
   showElevation?: boolean
+  /** When false, don't auto-fit to content (e.g. while tapping to edit). */
+  autoFit?: boolean
   /** GPS recording mode: draw the draft as a clean track (line + current dot). */
   trackMode?: boolean
   /** Pan the map to this point when it changes (live GPS follow). */
@@ -53,10 +55,11 @@ export function PropertyMapLive({
   height = 176,
   onAddPoint,
   draftPath,
-  boundary,
+  boundaries,
   showElevation,
   trackMode,
   recenter,
+  autoFit = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
@@ -111,11 +114,12 @@ export function PropertyMapLive({
     const bounds = new google.maps.LatLngBounds()
     const waypoints = new Map<string, google.maps.LatLngLiteral>()
 
-    // Property boundary (shaded parcel), drawn beneath the trails.
-    if (boundary && boundary.length >= 3) {
+    // Property / parcel polygons, drawn beneath the trails.
+    ;(boundaries ?? []).forEach((poly) => {
+      if (poly.length < 3) return
       overlaysRef.current.push(
         new google.maps.Polygon({
-          paths: boundary,
+          paths: poly,
           map,
           fillColor: '#6f7a44',
           fillOpacity: 0.1,
@@ -126,8 +130,8 @@ export function PropertyMapLive({
           zIndex: 1,
         }),
       )
-      boundary.forEach((pt) => bounds.extend(pt))
-    }
+      poly.forEach((pt) => bounds.extend(pt))
+    })
 
     segments.forEach((seg) => {
       if (!seg.path || seg.path.length < 2) return
@@ -206,10 +210,10 @@ export function PropertyMapLive({
 
     // Fit to the property (boundary + trails) when not mid-trace, so panning
     // during drawing isn't interrupted by a recenter on each tap.
-    if ((!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
+    if (autoFit && (!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath, boundary, trackMode])
+  }, [ready, segments, draftPath, boundaries, trackMode, autoFit])
 
   // Live GPS follow: keep the current position centered while recording.
   useEffect(() => {

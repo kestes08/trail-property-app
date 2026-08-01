@@ -105,6 +105,12 @@ store). Add each one two ways:
 All parcels are shaded on the property map (Home) and persist. Set the
 property's real `lat`/`lng` in `src/data.ts` so the map centers on the land.
 
+### Land zones (lawn / field / woods)
+
+The Trail Builder "Land zones" card lets you outline areas and tag each as
+lawn, field, or woods; each fills the map in its own color (`Zone` in the store,
+drawn by `PropertyMapLive`). Toggle them with the "Zones" chip on the Home map.
+
 ### Map overlays (toggles)
 
 Below the Home map, two toggle chips control overlays on the live map:

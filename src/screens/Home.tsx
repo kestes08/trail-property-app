@@ -26,10 +26,13 @@ export function Home() {
     openTaskCount,
     equipment,
     boundaries,
+    zones,
     showBoundary,
     showElevation,
+    showZones,
     toggleBoundary,
     toggleElevation,
+    toggleZones,
     toggleTask,
     setRoute,
   } = useStore()
@@ -57,6 +60,7 @@ export function Home() {
           property={property}
           segments={segments}
           boundaries={showBoundary ? boundaries : []}
+          zones={showZones ? zones : []}
           showElevation={showElevation}
         />
         <a
@@ -81,6 +85,16 @@ export function Home() {
             >
               <span className="toggle-chip__dot" style={{ background: '#3d5a3f' }} />
               Property lines
+            </button>
+          )}
+          {zones.length > 0 && (
+            <button
+              className={`toggle-chip ${showZones ? 'is-on' : ''}`}
+              aria-pressed={showZones}
+              onClick={toggleZones}
+            >
+              <span className="toggle-chip__dot" style={{ background: '#8ec06a' }} />
+              Zones
             </button>
           )}
           <button

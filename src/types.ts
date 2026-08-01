@@ -16,6 +16,14 @@ export interface LatLng {
   lng: number
 }
 
+export type ZoneType = 'lawn' | 'field' | 'woods'
+
+export interface Zone {
+  id: string
+  type: ZoneType
+  path: LatLng[]
+}
+
 export interface TrailSegment {
   id: string
   name: string

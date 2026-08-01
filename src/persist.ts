@@ -1,4 +1,4 @@
-import type { Equipment, LatLng, Task, TrailSegment } from './types'
+import type { Equipment, LatLng, Task, TrailSegment, Zone } from './types'
 
 // Bump the version if the stored shape changes in a breaking way. v2 also
 // clears the earlier example data that v1 had saved to the browser.
@@ -11,6 +11,7 @@ export interface PersistedState {
   boundaries?: LatLng[][]
   /** Legacy single boundary — migrated to `boundaries` on load. */
   boundary?: LatLng[] | null
+  zones?: Zone[]
 }
 
 /** Load saved data from the browser, or null if there is none / it's unreadable. */

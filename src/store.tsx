@@ -20,6 +20,8 @@ import type {
   TrailSegment,
   WeatherSnapshot,
   YardZone,
+  Zone,
+  ZoneType,
 } from './types'
 
 function initialsFor(name: string): string {
@@ -99,11 +101,18 @@ interface Store {
   removeBoundary: (index: number) => void
   clearBoundaries: () => void
 
+  zones: Zone[]
+  addZone: (type: ZoneType, path: LatLng[]) => void
+  removeZone: (id: string) => void
+  clearZones: () => void
+
   // Map overlay toggles
   showBoundary: boolean
   showElevation: boolean
+  showZones: boolean
   toggleBoundary: () => void
   toggleElevation: () => void
+  toggleZones: () => void
 
   // derived
   overallPercent: number
@@ -128,8 +137,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [boundaries, setBoundaries] = useState<LatLng[][]>(
     persisted?.boundaries ?? (persisted?.boundary ? [persisted.boundary] : []),
   )
+  const [zones, setZones] = useState<Zone[]>(persisted?.zones ?? [])
   const [showBoundary, setShowBoundary] = useState(true)
   const [showElevation, setShowElevation] = useState(false)
+  const [showZones, setShowZones] = useState(true)
   const [chat, setChat] = useState<ChatMessage[]>(() =>
     [openingMessage(initialSegments, seed.weather)],
   )
@@ -219,8 +230,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   )
   const clearBoundaries = useCallback(() => setBoundaries([]), [])
+  const addZone = useCallback(
+    (type: ZoneType, path: LatLng[]) => setZones((z) => [...z, { id: uid('zone'), type, path }]),
+    [],
+  )
+  const removeZone = useCallback((id: string) => setZones((z) => z.filter((x) => x.id !== id)), [])
+  const clearZones = useCallback(() => setZones([]), [])
   const toggleBoundary = useCallback(() => setShowBoundary((v) => !v), [])
   const toggleElevation = useCallback(() => setShowElevation((v) => !v), [])
+  const toggleZones = useCallback(() => setShowZones((v) => !v), [])
 
   const addTaskForSuggestion = useCallback(() => {
     const flagged = segments.find((s) => s.aiFlagged)
@@ -304,8 +322,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Persist the real data whenever it changes.
   useEffect(() => {
-    saveState({ segments, tasks, equipment, boundaries })
-  }, [segments, tasks, equipment, boundaries])
+    saveState({ segments, tasks, equipment, boundaries, zones })
+  }, [segments, tasks, equipment, boundaries, zones])
 
   const feetComplete = segments.reduce((a, s) => a + s.feetComplete, 0)
   const feetTotal = segments.reduce((a, s) => a + s.feetTotal, 0)
@@ -345,10 +363,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addBoundary,
       removeBoundary,
       clearBoundaries,
+      zones,
+      addZone,
+      removeZone,
+      clearZones,
       showBoundary,
       showElevation,
+      showZones,
       toggleBoundary,
       toggleElevation,
+      toggleZones,
       overallPercent,
       feetComplete,
       feetTotal,
@@ -383,10 +407,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addBoundary,
       removeBoundary,
       clearBoundaries,
+      zones,
+      addZone,
+      removeZone,
+      clearZones,
       showBoundary,
       showElevation,
+      showZones,
       toggleBoundary,
       toggleElevation,
+      toggleZones,
       overallPercent,
       feetComplete,
       feetTotal,

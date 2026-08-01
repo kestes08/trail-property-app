@@ -392,6 +392,18 @@
   border: 1px solid var(--hairline);
   color: var(--ink-soft);
 }
+.btn--zone {
+  color: #fff;
+}
+.btn--zone-lawn {
+  background: #6f9e5b;
+}
+.btn--zone-field {
+  background: #b89a45;
+}
+.btn--zone-woods {
+  background: #3f6b40;
+}
 .btn:disabled {
   opacity: 0.5;
 }

@@ -6,9 +6,11 @@ import { hasMapsKey } from '../maps'
 import { fetchParcelAt } from '../parcel'
 import { useStore } from '../store'
 import { useTrailTracker } from '../useTrailTracker'
-import type { LatLng, TrailSegment } from '../types'
+import type { LatLng, TrailSegment, ZoneType } from '../types'
 
-type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import'
+type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import' | 'zone'
+
+const ZONE_LABELS: Record<ZoneType, string> = { lawn: 'Lawn', field: 'Field', woods: 'Woods' }
 
 function pctColor(seg: TrailSegment): string {
   if (seg.aiFlagged) return 'var(--accent)'
@@ -33,6 +35,9 @@ export function TrailBuilder() {
     boundaries,
     addBoundary,
     clearBoundaries,
+    zones,
+    addZone,
+    clearZones,
     showElevation,
     setRoute,
   } = useStore()
@@ -42,6 +47,7 @@ export function TrailBuilder() {
   const [name, setName] = useState('')
   const [gisLoading, setGisLoading] = useState(false)
   const [gisError, setGisError] = useState<string | null>(null)
+  const [zoneType, setZoneType] = useState<ZoneType>('lawn')
   const tracker = useTrailTracker()
 
   const active = segments.filter((s) => s.status !== 'planned')
@@ -56,6 +62,12 @@ export function TrailBuilder() {
     setName('')
     setGisError(null)
     setMode(m)
+  }
+
+  function startZone(type: ZoneType) {
+    setDraftPath([])
+    setZoneType(type)
+    setMode('zone')
   }
 
   function startGps() {
@@ -79,6 +91,9 @@ export function TrailBuilder() {
     } else if (mode === 'boundary') {
       if (activePath.length < 3) return
       addBoundary(activePath)
+    } else if (mode === 'zone') {
+      if (activePath.length < 3) return
+      addZone(zoneType, activePath)
     }
     exitDraw()
   }
@@ -103,7 +118,7 @@ export function TrailBuilder() {
   }
 
   const saveDisabled =
-    mode === 'boundary' ? activePath.length < 3 : activePath.length < 2 || !name.trim()
+    mode === 'boundary' || mode === 'zone' ? activePath.length < 3 : activePath.length < 2 || !name.trim()
 
   return (
     <div className="screen-pad">
@@ -129,6 +144,7 @@ export function TrailBuilder() {
             property={property}
             segments={segments}
             boundaries={boundaries}
+            zones={zones}
             showElevation={showElevation}
             height={300}
             autoFit={false}
@@ -162,6 +178,7 @@ export function TrailBuilder() {
             property={property}
             segments={segments}
             boundaries={boundaries}
+            zones={zones}
             showElevation={showElevation}
             height={300}
             autoFit={false}
@@ -185,18 +202,21 @@ export function TrailBuilder() {
                 ? 'Tap along the route on the map to drop points. Each tap extends the trail line.'
                 : mode === 'boundary'
                   ? 'Tap each corner of your property, walking the boundary in order. Tap Save to close the shape.'
-                  : 'Walk the trail with your phone. Points record automatically. Pause anytime, then name it and save.'}
+                  : mode === 'zone'
+                    ? `Tap around the edge of your ${ZONE_LABELS[zoneType].toLowerCase()} area, then Save to fill it in.`
+                    : 'Walk the trail with your phone. Points record automatically. Pause anytime, then name it and save.'}
             </p>
             <div className="draw__stats">
               <span>
                 <strong className="num">{activePath.length}</strong> point{activePath.length === 1 ? '' : 's'}
               </span>
               <span>
-                <strong className="num">{draftFeet.toLocaleString()}</strong> ft{mode === 'boundary' ? ' perimeter' : ''}
+                <strong className="num">{draftFeet.toLocaleString()}</strong> ft
+                {mode === 'boundary' || mode === 'zone' ? ' perimeter' : ''}
               </span>
             </div>
             {tracker.error && mode === 'gps' && <p className="parcel-card__error">{tracker.error}</p>}
-            {mode !== 'boundary' && (
+            {mode !== 'boundary' && mode !== 'zone' && (
               <input
                 className="draw__input"
                 value={name}
@@ -221,7 +241,11 @@ export function TrailBuilder() {
                 Cancel
               </button>
               <button className="btn btn--filled" onClick={save} disabled={saveDisabled}>
-                {mode === 'boundary' ? 'Save boundary' : 'Save trail'}
+                {mode === 'boundary'
+                  ? 'Save boundary'
+                  : mode === 'zone'
+                    ? `Save ${ZONE_LABELS[zoneType].toLowerCase()}`
+                    : 'Save trail'}
               </button>
             </div>
           </div>
@@ -262,6 +286,39 @@ export function TrailBuilder() {
             )}
             {gisError && mode === null && <p className="parcel-card__error">{gisError}</p>}
           </div>
+
+          {/* Land zones (lawn / field / woods) */}
+          {hasMapsKey() && (
+            <div className="parcel-card">
+              <div className="parcel-card__head">
+                <span className="label">Land zones</span>
+                {zones.length > 0 && (
+                  <span className="parcel-card__badge">
+                    {zones.length} area{zones.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
+              <p className="parcel-card__body">
+                Shade your land by type — outline each lawn, field, or woods area and it fills in on the map.
+              </p>
+              <div className="parcel-card__actions">
+                <button className="btn btn--zone btn--zone-lawn" onClick={() => startZone('lawn')}>
+                  + Lawn
+                </button>
+                <button className="btn btn--zone btn--zone-field" onClick={() => startZone('field')}>
+                  + Field
+                </button>
+                <button className="btn btn--zone btn--zone-woods" onClick={() => startZone('woods')}>
+                  + Woods
+                </button>
+                {zones.length > 0 && (
+                  <button className="btn btn--ghost" onClick={clearZones}>
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {segments.length === 0 ? (
             <div className="empty">

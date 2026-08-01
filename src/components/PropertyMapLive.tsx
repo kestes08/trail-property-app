@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadGoogleMaps } from '../googleMapsLoader'
 import { hasMapsKey, mapsApiKey } from '../maps'
-import type { LatLng, Property, TrailSegment } from '../types'
+import type { LatLng, Property, TrailSegment, Zone, ZoneType } from '../types'
 import { PropertyMapEmbed } from './PropertyMapEmbed'
+
+const ZONE_COLORS: Record<ZoneType, { fill: string; stroke: string }> = {
+  lawn: { fill: '#8ec06a', stroke: '#5f8f4a' },
+  field: { fill: '#cdb15e', stroke: '#a88f3e' },
+  woods: { fill: '#3f6b40', stroke: '#2c4a2c' },
+}
 
 /** Trail line color, mirroring the segment coloring used in the Trail Builder. */
 function segmentColor(seg: TrailSegment): string {
@@ -23,6 +29,8 @@ interface Props {
   draftPath?: LatLng[]
   /** Property/parcel polygons (shaded) drawn beneath the trails. */
   boundaries?: LatLng[][]
+  /** Land-cover zones (lawn/field/woods), filled by type. */
+  zones?: Zone[]
   /** Overlay USGS elevation contour lines from The National Map. */
   showElevation?: boolean
   /** When false, don't auto-fit to content (e.g. while tapping to edit). */
@@ -56,6 +64,7 @@ export function PropertyMapLive({
   onAddPoint,
   draftPath,
   boundaries,
+  zones,
   showElevation,
   trackMode,
   recenter,
@@ -113,6 +122,26 @@ export function PropertyMapLive({
 
     const bounds = new google.maps.LatLngBounds()
     const waypoints = new Map<string, google.maps.LatLngLiteral>()
+
+    // Land-cover zones (bottom layer), filled by type.
+    ;(zones ?? []).forEach((zone) => {
+      if (zone.path.length < 3) return
+      const c = ZONE_COLORS[zone.type]
+      overlaysRef.current.push(
+        new google.maps.Polygon({
+          paths: zone.path,
+          map,
+          fillColor: c.fill,
+          fillOpacity: 0.35,
+          strokeColor: c.stroke,
+          strokeOpacity: 0.85,
+          strokeWeight: 1.5,
+          clickable: false,
+          zIndex: 0,
+        }),
+      )
+      zone.path.forEach((pt) => bounds.extend(pt))
+    })
 
     // Property / parcel polygons, drawn beneath the trails.
     ;(boundaries ?? []).forEach((poly) => {
@@ -213,7 +242,7 @@ export function PropertyMapLive({
     if (autoFit && (!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath, boundaries, trackMode, autoFit])
+  }, [ready, segments, draftPath, boundaries, zones, trackMode, autoFit])
 
   // Live GPS follow: keep the current position centered while recording.
   useEffect(() => {

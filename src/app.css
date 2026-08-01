@@ -700,6 +700,37 @@ img.splash__art {
   padding: 10px 12px;
 }
 
+/* Places list */
+.place-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.place-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.place-row__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--hairline);
+  flex: 0 0 auto;
+}
+.place-row__name {
+  flex: 1 1 auto;
+  font-size: 14px;
+  color: var(--ink);
+}
+
 /* Trail plotting */
 .draw {
   margin-top: 14px;

@@ -24,6 +24,13 @@ export interface Zone {
   path: LatLng[]
 }
 
+export interface Place {
+  id: string
+  name: string
+  lat: number
+  lng: number
+}
+
 export interface TrailSegment {
   id: string
   name: string

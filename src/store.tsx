@@ -16,6 +16,7 @@ import type {
   Equipment,
   LatLng,
   Property,
+  Place,
   Task,
   TrailSegment,
   WeatherSnapshot,
@@ -106,6 +107,10 @@ interface Store {
   removeZone: (id: string) => void
   clearZones: () => void
 
+  places: Place[]
+  addPlace: (name: string, point: LatLng) => void
+  removePlace: (id: string) => void
+
   // Map overlay toggles
   showBoundary: boolean
   showElevation: boolean
@@ -138,6 +143,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     persisted?.boundaries ?? (persisted?.boundary ? [persisted.boundary] : []),
   )
   const [zones, setZones] = useState<Zone[]>(persisted?.zones ?? [])
+  const [places, setPlaces] = useState<Place[]>(persisted?.places ?? [])
   const [showBoundary, setShowBoundary] = useState(true)
   const [showElevation, setShowElevation] = useState(false)
   const [showZones, setShowZones] = useState(true)
@@ -236,6 +242,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   )
   const removeZone = useCallback((id: string) => setZones((z) => z.filter((x) => x.id !== id)), [])
   const clearZones = useCallback(() => setZones([]), [])
+  const addPlace = useCallback(
+    (name: string, point: LatLng) =>
+      setPlaces((p) => [...p, { id: uid('place'), name: name.trim() || 'Place', lat: point.lat, lng: point.lng }]),
+    [],
+  )
+  const removePlace = useCallback((id: string) => setPlaces((p) => p.filter((x) => x.id !== id)), [])
   const toggleBoundary = useCallback(() => setShowBoundary((v) => !v), [])
   const toggleElevation = useCallback(() => setShowElevation((v) => !v), [])
   const toggleZones = useCallback(() => setShowZones((v) => !v), [])
@@ -322,8 +334,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Persist the real data whenever it changes.
   useEffect(() => {
-    saveState({ segments, tasks, equipment, boundaries, zones })
-  }, [segments, tasks, equipment, boundaries, zones])
+    saveState({ segments, tasks, equipment, boundaries, zones, places })
+  }, [segments, tasks, equipment, boundaries, zones, places])
 
   const feetComplete = segments.reduce((a, s) => a + s.feetComplete, 0)
   const feetTotal = segments.reduce((a, s) => a + s.feetTotal, 0)
@@ -367,6 +379,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addZone,
       removeZone,
       clearZones,
+      places,
+      addPlace,
+      removePlace,
       showBoundary,
       showElevation,
       showZones,
@@ -411,6 +426,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addZone,
       removeZone,
       clearZones,
+      places,
+      addPlace,
+      removePlace,
       showBoundary,
       showElevation,
       showZones,

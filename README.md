@@ -91,8 +91,10 @@ control, and everything persists.
 The Trail Builder screen can show the property boundary two ways (`src/parcel.ts`,
 rendered by `PropertyMapLive`):
 
-The property can hold **multiple parcels** (`boundaries: LatLng[][]` in the
-store). Add each one two ways:
+The property outline (`propertyBoundary` in `src/data.ts`) is baked in — traced
+from the county parcel map and georeferenced to two surveyed corners — and is
+always shaded on the map. On top of that, the store can hold extra **parcels**
+(`boundaries: LatLng[][]`), added two ways:
 
 - **Add by GIS** — tap inside a parcel on the map; it queries Virginia's
   statewide parcel FeatureServer (VGIN/VDEM) at that point and adds the returned
@@ -110,6 +112,12 @@ property's real `lat`/`lng` in `src/data.ts` so the map centers on the land.
 The Trail Builder "Land zones" card lets you outline areas and tag each as
 lawn, field, or woods; each fills the map in its own color (`Zone` in the store,
 drawn by `PropertyMapLive`). Toggle them with the "Zones" chip on the Home map.
+
+### Places
+
+The "Places" card lets you name spots (house, gate, trailhead): type a name and
+tap the map. Each `Place` renders as a pin with a name label on every map, and
+they persist.
 
 ### Map overlays (toggles)
 

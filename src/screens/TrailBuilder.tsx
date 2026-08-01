@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PropertyMapLive } from '../components/PropertyMapLive'
 import { SuggestionCard } from '../components/SuggestionCard'
+import { propertyBoundary } from '../data'
 import { pathLengthFeet } from '../geo'
 import { hasMapsKey } from '../maps'
 import { fetchParcelAt } from '../parcel'
@@ -8,7 +9,7 @@ import { useStore } from '../store'
 import { useTrailTracker } from '../useTrailTracker'
 import type { LatLng, TrailSegment, ZoneType } from '../types'
 
-type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import' | 'zone'
+type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import' | 'zone' | 'place'
 
 const ZONE_LABELS: Record<ZoneType, string> = { lawn: 'Lawn', field: 'Field', woods: 'Woods' }
 
@@ -38,6 +39,9 @@ export function TrailBuilder() {
     zones,
     addZone,
     clearZones,
+    places,
+    addPlace,
+    removePlace,
     showElevation,
     setRoute,
   } = useStore()
@@ -48,6 +52,7 @@ export function TrailBuilder() {
   const [gisLoading, setGisLoading] = useState(false)
   const [gisError, setGisError] = useState<string | null>(null)
   const [zoneType, setZoneType] = useState<ZoneType>('lawn')
+  const [placeName, setPlaceName] = useState('')
   const tracker = useTrailTracker()
 
   const active = segments.filter((s) => s.status !== 'planned')
@@ -138,13 +143,54 @@ export function TrailBuilder() {
         </div>
       </header>
 
-      {mode === 'import' ? (
+      {mode === 'place' ? (
         <div className="draw">
           <PropertyMapLive
             property={property}
             segments={segments}
-            boundaries={boundaries}
+            boundaries={[propertyBoundary, ...boundaries]}
             zones={zones}
+            places={places}
+            showElevation={showElevation}
+            height={300}
+            autoFit={false}
+            onAddPoint={(pt) => {
+              if (placeName.trim()) {
+                addPlace(placeName, pt)
+                setPlaceName('')
+              }
+            }}
+          />
+          <div className="draw__panel">
+            <p className="draw__hint">
+              Type a name, then tap where it is on the map. Add as many as you like — your house, nana's house, a gate.
+            </p>
+            <input
+              className="draw__input"
+              value={placeName}
+              placeholder="Place name (e.g. My house)"
+              onChange={(e) => setPlaceName(e.target.value)}
+            />
+            <div className="draw__stats">
+              <span>
+                <strong className="num">{places.length}</strong> place{places.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            <div className="draw__actions">
+              <button className="btn btn--filled" onClick={exitDraw}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : mode === 'import' ? (
+        <div className="draw">
+          <PropertyMapLive
+            property={property}
+            segments={segments}
+            boundaries={[propertyBoundary, ...boundaries]}
+            zones={zones}
+            places={places}
             showElevation={showElevation}
             height={300}
             autoFit={false}
@@ -177,8 +223,9 @@ export function TrailBuilder() {
           <PropertyMapLive
             property={property}
             segments={segments}
-            boundaries={boundaries}
+            boundaries={[propertyBoundary, ...boundaries]}
             zones={zones}
+            places={places}
             showElevation={showElevation}
             height={300}
             autoFit={false}
@@ -316,6 +363,44 @@ export function TrailBuilder() {
                     Clear all
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Places */}
+          {hasMapsKey() && (
+            <div className="parcel-card">
+              <div className="parcel-card__head">
+                <span className="label">Places</span>
+                {places.length > 0 && <span className="parcel-card__badge">{places.length}</span>}
+              </div>
+              {places.length > 0 ? (
+                <div className="place-list">
+                  {places.map((pl) => (
+                    <div className="place-row" key={pl.id}>
+                      <span className="place-row__dot" />
+                      <span className="place-row__name">{pl.name}</span>
+                      <button className="row-del" aria-label="Delete place" onClick={() => removePlace(pl.id)}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="parcel-card__body">
+                  Mark and name spots on your property — your house, nana's house, a gate, the trailhead.
+                </p>
+              )}
+              <div className="parcel-card__actions">
+                <button
+                  className="btn btn--filled"
+                  onClick={() => {
+                    setPlaceName('')
+                    setMode('place')
+                  }}
+                >
+                  Add a place
+                </button>
               </div>
             </div>
           )}

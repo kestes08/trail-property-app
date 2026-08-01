@@ -1,4 +1,5 @@
 import { PropertyMapLive } from '../components/PropertyMapLive'
+import { propertyBoundary } from '../data'
 import { dueLabel, isSoon } from '../format'
 import { hasMapsKey, mapExternalUrl } from '../maps'
 import { useStore } from '../store'
@@ -27,6 +28,7 @@ export function Home() {
     equipment,
     boundaries,
     zones,
+    places,
     showBoundary,
     showElevation,
     showZones,
@@ -59,8 +61,9 @@ export function Home() {
         <PropertyMapLive
           property={property}
           segments={segments}
-          boundaries={showBoundary ? boundaries : []}
+          boundaries={showBoundary ? [propertyBoundary, ...boundaries] : []}
           zones={showZones ? zones : []}
+          places={places}
           showElevation={showElevation}
         />
         <a
@@ -77,16 +80,14 @@ export function Home() {
       {/* Overlay toggles (only meaningful on the live JS map) */}
       {hasMapsKey() && (
         <div className="map-toggles">
-          {boundaries.length > 0 && (
-            <button
-              className={`toggle-chip ${showBoundary ? 'is-on' : ''}`}
-              aria-pressed={showBoundary}
-              onClick={toggleBoundary}
-            >
-              <span className="toggle-chip__dot" style={{ background: '#3d5a3f' }} />
-              Property lines
-            </button>
-          )}
+          <button
+            className={`toggle-chip ${showBoundary ? 'is-on' : ''}`}
+            aria-pressed={showBoundary}
+            onClick={toggleBoundary}
+          >
+            <span className="toggle-chip__dot" style={{ background: '#3d5a3f' }} />
+            Property lines
+          </button>
           {zones.length > 0 && (
             <button
               className={`toggle-chip ${showZones ? 'is-on' : ''}`}

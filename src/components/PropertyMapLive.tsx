@@ -1,8 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadGoogleMaps } from '../googleMapsLoader'
 import { hasMapsKey, mapsApiKey } from '../maps'
-import type { LatLng, Property, TrailSegment, Zone, ZoneType } from '../types'
+import type { LatLng, Place, Property, TrailSegment, Zone, ZoneType } from '../types'
 import { PropertyMapEmbed } from './PropertyMapEmbed'
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/** A pin dot with a name pill, as an SVG data-URI marker icon. */
+function placeIconUrl(name: string): string {
+  const w = 26 + name.length * 7.3 + 14
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='30' viewBox='0 0 ${w} 30'>` +
+    `<rect x='20' y='6' rx='7' width='${name.length * 7.3 + 14}' height='18' fill='#1f3d2b' opacity='0.92'/>` +
+    `<text x='27' y='19' font-family='sans-serif' font-size='12' font-weight='600' fill='#f3efe4'>${esc(name)}</text>` +
+    `<circle cx='10' cy='15' r='6' fill='#c8743a' stroke='#ffffff' stroke-width='2'/>` +
+    `</svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
 
 const ZONE_COLORS: Record<ZoneType, { fill: string; stroke: string }> = {
   lawn: { fill: '#8ec06a', stroke: '#5f8f4a' },
@@ -31,6 +45,8 @@ interface Props {
   boundaries?: LatLng[][]
   /** Land-cover zones (lawn/field/woods), filled by type. */
   zones?: Zone[]
+  /** Named place markers (house, etc.). */
+  places?: Place[]
   /** Overlay USGS elevation contour lines from The National Map. */
   showElevation?: boolean
   /** When false, don't auto-fit to content (e.g. while tapping to edit). */
@@ -65,6 +81,7 @@ export function PropertyMapLive({
   draftPath,
   boundaries,
   zones,
+  places,
   showElevation,
   trackMode,
   recenter,
@@ -195,6 +212,23 @@ export function PropertyMapLive({
       )
     })
 
+    // Named places (house, etc.).
+    ;(places ?? []).forEach((place) => {
+      const pos = { lat: place.lat, lng: place.lng }
+      overlaysRef.current.push(
+        new google.maps.Marker({
+          position: pos,
+          map,
+          icon: {
+            url: placeIconUrl(place.name),
+            anchor: new google.maps.Point(10, 15),
+          },
+          zIndex: 9,
+        }),
+      )
+      bounds.extend(pos)
+    })
+
     // The trail being traced/recorded right now.
     if (draftPath && draftPath.length > 0) {
       if (draftPath.length >= 2) {
@@ -242,7 +276,7 @@ export function PropertyMapLive({
     if (autoFit && (!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath, boundaries, zones, trackMode, autoFit])
+  }, [ready, segments, draftPath, boundaries, zones, places, trackMode, autoFit])
 
   // Live GPS follow: keep the current position centered while recording.
   useEffect(() => {

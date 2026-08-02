@@ -17,7 +17,7 @@
   z-index: 12;
 }
 .phone--dark .promptbar {
-  bottom: 26px;
+  bottom: calc(26px + env(safe-area-inset-bottom, 0px));
 }
 .promptbar--cream {
   background: var(--cream);

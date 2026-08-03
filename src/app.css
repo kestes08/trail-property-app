@@ -452,6 +452,18 @@
   border-radius: 5px;
 }
 
+/* Dark scrim behind the transparent iOS status bar (readable white text on
+   light screens). Sits below the splash so the launch image is full-bleed. */
+.statusbar-scrim {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--forest-dark);
+  z-index: 55;
+}
+
 /* Launch splash */
 .splash {
   position: absolute;

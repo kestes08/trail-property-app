@@ -45,6 +45,10 @@ export default function App() {
       <PromptBar />
       {!onRanger && <TabBar />}
 
+      {/* Dark strip behind the (now transparent, white-text) status bar so the
+          time/battery stay readable on light screens. The splash sits above it. */}
+      {standalone && <div className="statusbar-scrim" aria-hidden />}
+
       {splash && (
         <div className="splash">
           {useSplashImage ? (

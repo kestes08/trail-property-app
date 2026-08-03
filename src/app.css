@@ -469,10 +469,6 @@
   display: block;
   object-fit: cover;
 }
-/* The supplied image has a rounded-card frame baked in; zoom past it. */
-img.splash__art {
-  transform: scale(1.09);
-}
 .splash__word {
   position: absolute;
   top: 8%;

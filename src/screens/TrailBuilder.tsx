@@ -35,7 +35,6 @@ export function TrailBuilder() {
     addSegment,
     boundaries,
     addBoundary,
-    clearBoundaries,
     zones,
     addZone,
     clearZones,
@@ -299,41 +298,6 @@ export function TrailBuilder() {
         </div>
       ) : (
         <>
-          {/* Property lines / parcels */}
-          <div className="parcel-card">
-            <div className="parcel-card__head">
-              <span className="label">Property lines</span>
-              {boundaries.length > 0 && (
-                <span className="parcel-card__badge">
-                  {boundaries.length} parcel{boundaries.length === 1 ? '' : 's'}
-                </span>
-              )}
-            </div>
-            <p className="parcel-card__body">
-              {boundaries.length > 0
-                ? 'Your parcels are shaded on the property map. Add another, or clear to start over.'
-                : 'Add each of your parcels: tap inside it to pull it from the state GIS, or trace it on the map.'}
-            </p>
-            {hasMapsKey() ? (
-              <div className="parcel-card__actions">
-                <button className="btn btn--filled" onClick={() => start('import')}>
-                  Add by GIS
-                </button>
-                <button className="btn btn--ghost" onClick={() => start('boundary')}>
-                  Trace one
-                </button>
-                {boundaries.length > 0 && (
-                  <button className="btn btn--ghost" onClick={clearBoundaries}>
-                    Clear all
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p className="parcel-card__note">Property lines show once the site is deployed with your Google Maps key.</p>
-            )}
-            {gisError && mode === null && <p className="parcel-card__error">{gisError}</p>}
-          </div>
-
           {/* Land zones (lawn / field / woods) */}
           {hasMapsKey() && (
             <div className="parcel-card">

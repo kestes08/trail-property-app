@@ -31,7 +31,6 @@ export function Stats() {
       <header className="sub-header sub-header--flush">
         <div>
           <h1 className="head sub-header__title">Stats</h1>
-          <div className="sub-header__meta">Hollow Ridge at a glance</div>
         </div>
       </header>
 

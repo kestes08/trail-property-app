@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { PropertyMapLive } from '../components/PropertyMapLive'
 import { SuggestionCard } from '../components/SuggestionCard'
 import { propertyBoundary } from '../data'
-import { pathLengthFeet } from '../geo'
+import { closeAlongBoundary, pathLengthFeet } from '../geo'
 import { hasMapsKey } from '../maps'
 import { fetchParcelAt } from '../parcel'
 import { useStore } from '../store'
 import { useTrailTracker } from '../useTrailTracker'
 import type { LatLng, TrailSegment, ZoneType } from '../types'
 
-type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import' | 'zone' | 'place'
+type DrawMode = null | 'trail' | 'boundary' | 'gps' | 'import' | 'zone' | 'zone-gps' | 'place'
 
 const ZONE_LABELS: Record<ZoneType, string> = { lawn: 'Lawn', field: 'Field', woods: 'Woods' }
 
@@ -51,15 +51,26 @@ export function TrailBuilder() {
   const [gisLoading, setGisLoading] = useState(false)
   const [gisError, setGisError] = useState<string | null>(null)
   const [zoneType, setZoneType] = useState<ZoneType>('lawn')
+  const [closeToBoundary, setCloseToBoundary] = useState(true)
   const [placeName, setPlaceName] = useState('')
   const tracker = useTrailTracker()
 
   const active = segments.filter((s) => s.status !== 'planned')
   const planned = segments.filter((s) => s.status === 'planned')
 
+  const isGps = mode === 'gps' || mode === 'zone-gps'
+  const isZone = mode === 'zone' || mode === 'zone-gps'
+
   // The path in progress: GPS points while recording, otherwise tapped points.
-  const activePath = mode === 'gps' ? tracker.points : draftPath
+  const activePath = isGps ? tracker.points : draftPath
   const draftFeet = pathLengthFeet(activePath)
+
+  // For a zone that closes along the property line, resolve the finished
+  // polygon so it can be previewed while walking and used on save.
+  const zonePolygon =
+    isZone && closeToBoundary && activePath.length >= 2
+      ? closeAlongBoundary(activePath, propertyBoundary)
+      : activePath
 
   function start(m: 'trail' | 'boundary' | 'import') {
     setDraftPath([])
@@ -68,10 +79,28 @@ export function TrailBuilder() {
     setMode(m)
   }
 
-  function startZone(type: ZoneType) {
+  // Walk a zone's edge with GPS; the property line closes the rest.
+  function startZoneWalk(type: ZoneType) {
+    setDraftPath([])
+    setZoneType(type)
+    tracker.reset()
+    tracker.start()
+    setMode('zone-gps')
+  }
+
+  // Tap a zone's outline on the map instead of walking it.
+  function startZoneTap(type: ZoneType) {
+    tracker.reset()
     setDraftPath([])
     setZoneType(type)
     setMode('zone')
+  }
+
+  // Switch the current zone draft between walking and tapping, keeping type.
+  function switchZoneInput(to: 'zone' | 'zone-gps') {
+    if (to === mode) return
+    if (to === 'zone-gps') startZoneWalk(zoneType)
+    else startZoneTap(zoneType)
   }
 
   function startGps() {
@@ -95,9 +124,9 @@ export function TrailBuilder() {
     } else if (mode === 'boundary') {
       if (activePath.length < 3) return
       addBoundary(activePath)
-    } else if (mode === 'zone') {
-      if (activePath.length < 3) return
-      addZone(zoneType, activePath)
+    } else if (isZone) {
+      if (zonePolygon.length < 3) return
+      addZone(zoneType, zonePolygon)
     }
     exitDraw()
   }
@@ -121,8 +150,11 @@ export function TrailBuilder() {
     }
   }
 
-  const saveDisabled =
-    mode === 'boundary' || mode === 'zone' ? activePath.length < 3 : activePath.length < 2 || !name.trim()
+  const saveDisabled = isZone
+    ? zonePolygon.length < 3
+    : mode === 'boundary'
+      ? activePath.length < 3
+      : activePath.length < 2 || !name.trim()
 
   return (
     <div className="screen-pad">
@@ -229,15 +261,40 @@ export function TrailBuilder() {
             height={300}
             autoFit={false}
             draftPath={activePath}
-            trackMode={mode === 'gps'}
-            recenter={mode === 'gps' && activePath.length ? activePath[activePath.length - 1] : undefined}
-            onAddPoint={mode === 'gps' ? undefined : (pt) => setDraftPath((p) => [...p, pt])}
+            previewPolygon={
+              isZone && closeToBoundary && zonePolygon.length >= 3
+                ? { type: zoneType, path: zonePolygon }
+                : undefined
+            }
+            trackMode={isGps}
+            recenter={isGps && activePath.length ? activePath[activePath.length - 1] : undefined}
+            onAddPoint={isGps ? undefined : (pt) => setDraftPath((p) => [...p, pt])}
           />
           <div className="draw__panel">
-            {mode === 'gps' && (
+            {isZone && (
+              <div className="seg-toggle" role="tablist" aria-label="Zone input">
+                <button
+                  className={`seg-toggle__btn ${mode === 'zone-gps' ? 'is-on' : ''}`}
+                  onClick={() => switchZoneInput('zone-gps')}
+                >
+                  Walk it
+                </button>
+                <button
+                  className={`seg-toggle__btn ${mode === 'zone' ? 'is-on' : ''}`}
+                  onClick={() => switchZoneInput('zone')}
+                >
+                  Tap it
+                </button>
+              </div>
+            )}
+            {isGps && (
               <div className={`gps-status ${tracker.recording ? 'is-live' : ''}`}>
                 <span className="gps-status__dot" />
-                {tracker.recording ? 'Recording — walk the trail' : 'Paused'}
+                {tracker.recording
+                  ? mode === 'zone-gps'
+                    ? `Recording — walk the edge of your ${ZONE_LABELS[zoneType].toLowerCase()}`
+                    : 'Recording — walk the trail'
+                  : 'Paused'}
                 {tracker.accuracy != null && (
                   <span className="gps-status__acc">±{Math.round(tracker.accuracy)} m</span>
                 )}
@@ -249,20 +306,36 @@ export function TrailBuilder() {
                 : mode === 'boundary'
                   ? 'Tap each corner of your property, walking the boundary in order. Tap Save to close the shape.'
                   : mode === 'zone'
-                    ? `Tap around the edge of your ${ZONE_LABELS[zoneType].toLowerCase()} area, then Save to fill it in.`
-                    : 'Walk the trail with your phone. Points record automatically. Pause anytime, then name it and save.'}
+                    ? closeToBoundary
+                      ? `Tap along the inside edge of your ${ZONE_LABELS[zoneType].toLowerCase()}. The property line closes off the rest — start and end near it.`
+                      : `Tap all the way around your ${ZONE_LABELS[zoneType].toLowerCase()} area, then Save to fill it in.`
+                    : mode === 'zone-gps'
+                      ? closeToBoundary
+                        ? `Walk the inside edge of your ${ZONE_LABELS[zoneType].toLowerCase()}, starting and ending near the property line. It closes the rest for you.`
+                        : `Walk the whole perimeter of your ${ZONE_LABELS[zoneType].toLowerCase()} and back to the start, then Save.`
+                      : 'Walk the trail with your phone. Points record automatically. Pause anytime, then name it and save.'}
             </p>
+            {isZone && (
+              <label className="draw__check">
+                <input
+                  type="checkbox"
+                  checked={closeToBoundary}
+                  onChange={(e) => setCloseToBoundary(e.target.checked)}
+                />
+                Close along the property line
+              </label>
+            )}
             <div className="draw__stats">
               <span>
                 <strong className="num">{activePath.length}</strong> point{activePath.length === 1 ? '' : 's'}
               </span>
               <span>
                 <strong className="num">{draftFeet.toLocaleString()}</strong> ft
-                {mode === 'boundary' || mode === 'zone' ? ' perimeter' : ''}
+                {mode === 'boundary' ? ' perimeter' : isZone ? ' of edge' : ''}
               </span>
             </div>
-            {tracker.error && mode === 'gps' && <p className="parcel-card__error">{tracker.error}</p>}
-            {mode !== 'boundary' && mode !== 'zone' && (
+            {tracker.error && isGps && <p className="parcel-card__error">{tracker.error}</p>}
+            {mode !== 'boundary' && !isZone && (
               <input
                 className="draw__input"
                 value={name}
@@ -271,7 +344,7 @@ export function TrailBuilder() {
               />
             )}
             <div className="draw__actions">
-              {mode === 'gps' ? (
+              {isGps ? (
                 <button
                   className="btn btn--ghost"
                   onClick={() => (tracker.recording ? tracker.pause() : tracker.start())}
@@ -289,7 +362,7 @@ export function TrailBuilder() {
               <button className="btn btn--filled" onClick={save} disabled={saveDisabled}>
                 {mode === 'boundary'
                   ? 'Save boundary'
-                  : mode === 'zone'
+                  : isZone
                     ? `Save ${ZONE_LABELS[zoneType].toLowerCase()}`
                     : 'Save trail'}
               </button>
@@ -310,16 +383,17 @@ export function TrailBuilder() {
                 )}
               </div>
               <p className="parcel-card__body">
-                Shade your land by type — outline each lawn, field, or woods area and it fills in on the map.
+                Shade your land by type — walk the inside edge of a lawn, field, or woods area and the property line
+                closes off the rest. Add as many separate areas of each type as you like.
               </p>
               <div className="parcel-card__actions">
-                <button className="btn btn--zone btn--zone-lawn" onClick={() => startZone('lawn')}>
+                <button className="btn btn--zone btn--zone-lawn" onClick={() => startZoneWalk('lawn')}>
                   + Lawn
                 </button>
-                <button className="btn btn--zone btn--zone-field" onClick={() => startZone('field')}>
+                <button className="btn btn--zone btn--zone-field" onClick={() => startZoneWalk('field')}>
                   + Field
                 </button>
-                <button className="btn btn--zone btn--zone-woods" onClick={() => startZone('woods')}>
+                <button className="btn btn--zone btn--zone-woods" onClick={() => startZoneWalk('woods')}>
                   + Woods
                 </button>
                 {zones.length > 0 && (

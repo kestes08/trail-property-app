@@ -41,6 +41,8 @@ interface Props {
   onAddPoint?: (point: LatLng) => void
   /** In-progress path being traced, drawn on top in the accent color. */
   draftPath?: LatLng[]
+  /** Preview of a zone that will be closed along the property line (dashed). */
+  previewPolygon?: { type: ZoneType; path: LatLng[] }
   /** Property/parcel polygons (shaded) drawn beneath the trails. */
   boundaries?: LatLng[][]
   /** Land-cover zones (lawn/field/woods), filled by type. */
@@ -79,6 +81,7 @@ export function PropertyMapLive({
   height = 176,
   onAddPoint,
   draftPath,
+  previewPolygon,
   boundaries,
   zones,
   places,
@@ -229,6 +232,35 @@ export function PropertyMapLive({
       bounds.extend(pos)
     })
 
+    // Preview of a zone that will be closed along the property line: fill the
+    // resolved polygon faintly and dash the boundary-side arc so the closure is
+    // visible while walking.
+    if (previewPolygon && previewPolygon.path.length >= 3) {
+      const c = ZONE_COLORS[previewPolygon.type]
+      overlaysRef.current.push(
+        new google.maps.Polygon({
+          paths: previewPolygon.path,
+          map,
+          fillColor: c.fill,
+          fillOpacity: 0.22,
+          strokeColor: c.stroke,
+          strokeOpacity: 0,
+          clickable: false,
+          zIndex: 3,
+        }),
+      )
+      // Dashed outline of the closed shape, via a closed polyline.
+      overlaysRef.current.push(
+        new google.maps.Polyline({
+          path: [...previewPolygon.path, previewPolygon.path[0]],
+          map,
+          strokeOpacity: 0,
+          zIndex: 4,
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: c.stroke, strokeOpacity: 1, scale: 2 }, offset: '0', repeat: '9px' }],
+        }),
+      )
+    }
+
     // The trail being traced/recorded right now.
     if (draftPath && draftPath.length > 0) {
       if (draftPath.length >= 2) {
@@ -276,7 +308,7 @@ export function PropertyMapLive({
     if (autoFit && (!draftPath || draftPath.length === 0) && !bounds.isEmpty()) {
       map.fitBounds(bounds, 28)
     }
-  }, [ready, segments, draftPath, boundaries, zones, places, trackMode, autoFit])
+  }, [ready, segments, draftPath, previewPolygon, boundaries, zones, places, trackMode, autoFit])
 
   // Live GPS follow: keep the current position centered while recording.
   useEffect(() => {

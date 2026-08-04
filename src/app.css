@@ -798,6 +798,47 @@
   padding: 10px 12px;
 }
 
+/* Walk / Tap switch for zone drawing */
+.seg-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 12px;
+  background: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+.seg-toggle__btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.seg-toggle__btn.is-on {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.draw__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.draw__check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--olive);
+}
+
 .seg-list {
   display: flex;
   flex-direction: column;

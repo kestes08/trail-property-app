@@ -112,15 +112,15 @@ input {
     display: block;
     min-height: 0;
   }
-  /* Pin the app to the visual viewport so nothing scrolls off-screen; the
-     internal .screen area does the scrolling. */
+  /* Pin the app to the full visual viewport — anchoring all four edges (inset)
+     rather than a 100dvh height so the frame reaches under the iOS home
+     indicator, leaving no empty strip at the bottom. The internal .screen area
+     does the scrolling; the tab bar / splash extend into the safe area. */
   .phone {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    inset: 0;
+    width: auto;
+    height: auto;
     max-height: none;
     border-radius: 0;
     box-shadow: none;

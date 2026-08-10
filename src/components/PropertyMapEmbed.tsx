@@ -7,7 +7,7 @@ export function PropertyMapEmbed({
   height = 176,
 }: {
   property: Property
-  height?: number
+  height?: number | string
 }) {
   return (
     <iframe

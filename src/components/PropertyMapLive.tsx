@@ -36,7 +36,7 @@ function segmentColor(seg: TrailSegment): string {
 interface Props {
   property: Property
   segments: TrailSegment[]
-  height?: number
+  height?: number | string
   /** When set, tapping the map reports the point (drawing mode). */
   onAddPoint?: (point: LatLng) => void
   /** In-progress path being traced, drawn on top in the accent color. */
@@ -327,14 +327,14 @@ export function PropertyMapLive({
         tileSize: new google.maps.Size(256, 256),
         opacity: 0.85,
         getTileUrl: (coord, zoom) => {
-          // Request each 256px tile at 512px. The service picks its contour
-          // detail from image-size-vs-extent, so oversizing pulls in the finer
-          // intermediate contours; the browser scales the result back to 256.
+          // Request each 256px tile at 1024px. The service picks its contour
+          // detail from image-size-vs-extent, so oversizing 4× pulls in the
+          // finest intermediate contours; the browser scales it back to 256.
           const params = new URLSearchParams({
             bbox: tileBboxMercator(coord.x, coord.y, zoom),
             bboxSR: '3857',
             imageSR: '3857',
-            size: '512,512',
+            size: '1024,1024',
             format: 'png32',
             transparent: 'true',
             dpi: '96',

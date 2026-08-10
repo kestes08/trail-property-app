@@ -173,7 +173,7 @@ input {
   display: none;
 }
 .screen-pad {
-  padding: 0 18px 158px;
+  padding: 0 18px calc(158px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Shared cards ----------------------------------------------------------- */

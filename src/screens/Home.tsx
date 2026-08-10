@@ -74,7 +74,9 @@ export function Home() {
         >
           Map ↗
         </a>
-        <div className="map-card__stat pill">{trailCount} trails · 3 zones</div>
+        <div className="map-card__stat pill">
+          {trailCount} trail{trailCount === 1 ? '' : 's'} · {zones.length} zone{zones.length === 1 ? '' : 's'}
+        </div>
       </div>
 
       {/* Overlay toggles (only meaningful on the live JS map) */}

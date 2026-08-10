@@ -17,6 +17,21 @@ const tabs: TabDef[] = [
     ),
   },
   {
+    key: 'map',
+    label: 'Map',
+    // Folded paper map.
+    icon: (a) => (
+      <path
+        d="M3 6l6-2 4 2 6-2v14l-6 2-4-2-6 2V6Zm6-2v14m4-12v14"
+        stroke={stroke(a)}
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="none"
+      />
+    ),
+  },
+  {
     key: 'trails',
     label: 'Trails',
     // Winding dotted route with a start point and a destination marker.

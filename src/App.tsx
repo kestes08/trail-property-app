@@ -6,6 +6,7 @@ import { StatusBar } from './components/StatusBar'
 import { TabBar } from './components/TabBar'
 import { Equipment } from './screens/Equipment'
 import { Home } from './screens/Home'
+import { MapScreen } from './screens/MapScreen'
 import { Ranger } from './screens/Ranger'
 import { Stats } from './screens/Stats'
 import { TrailBuilder } from './screens/TrailBuilder'
@@ -33,6 +34,7 @@ export default function App() {
 
       <main className="screen">
         {route === 'home' && <Home />}
+        {route === 'map' && <MapScreen />}
         {route === 'trails' && <TrailBuilder />}
         {route === 'yard' && <Yard />}
         {route === 'gear' && <Equipment />}

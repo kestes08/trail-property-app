@@ -44,7 +44,7 @@ export interface NewEquipmentInput {
   serviceIntervalHours: number
 }
 
-export type TabKey = 'home' | 'trails' | 'yard' | 'gear' | 'stats'
+export type TabKey = 'home' | 'map' | 'trails' | 'yard' | 'gear' | 'stats'
 export type Route = TabKey | 'ranger'
 
 function uid(prefix: string) {
